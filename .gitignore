@@ -1,0 +1,19 @@
+# Secrets — لا ترفع هذه أبداً
+.env
+token.json
+client_secret.json
+
+# مجلدات كبيرة
+video/
+audio/
+thumbnails/
+__pycache__/
+*.pyc
+*.pyo
+
+# Logs
+logs/
+
+# Temp files
+temp_audio.m4a
+*.tmp

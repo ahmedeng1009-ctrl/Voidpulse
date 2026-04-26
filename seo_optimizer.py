@@ -1,0 +1,229 @@
+"""
+VoidPulse SEO Optimizer
+Uses Claude to generate YouTube-optimized title, description, and tags
+for each video — maximizing discoverability and click-through rate.
+
+Usage:
+    python seo_optimizer.py --topic "The dark truth about sleep deprivation"
+    python seo_optimizer.py --script scripts/drafts/foo.md
+"""
+
+import argparse
+import json
+import os
+import re
+from pathlib import Path
+
+from dotenv import load_dotenv
+
+load_dotenv()
+
+# ── Prompt ────────────────────────────────────────────────────────────────────
+
+SYSTEM_PROMPT = """You are a YouTube SEO expert specializing in dark, viral short-form content.
+Your job is to write metadata that maximizes impressions, CTR, and watch time on YouTube Shorts.
+
+Rules:
+- Title: max 70 chars, starts with a shocking hook word or number, no clickbait lies
+- Description: 3–4 lines, first line is the hook, includes 3–5 hashtags at the end
+- Tags: 18–22 tags, mix of broad (shorts, facts) and specific (topic keywords), all lowercase
+
+Always return valid JSON only — no markdown, no explanation."""
+
+USER_TEMPLATE = """Generate YouTube SEO metadata for this VoidPulse video.
+
+Topic: {topic}
+Hook line: {hook}
+Style: dark, dramatic, conspiracy-core, fact-based
+
+Return ONLY this JSON:
+{{
+  "title": "...",
+  "description": "...",
+  "tags": ["tag1", "tag2", ...]
+}}"""
+
+# ── Core function ─────────────────────────────────────────────────────────────
+
+def generate_seo_metadata(topic: str, hook: str = "") -> dict:
+    """Call Claude to generate SEO-optimized YouTube metadata."""
+    import anthropic
+
+    client = anthropic.Anthropic()
+
+    response = client.messages.create(
+        model="claude-sonnet-4-6",
+        max_tokens=1024,
+        system=[{
+            "type": "text",
+            "text": SYSTEM_PROMPT,
+            "cache_control": {"type": "ephemeral"},
+        }],
+        messages=[{
+            "role": "user",
+            "content": USER_TEMPLATE.format(
+                topic=topic,
+                hook=hook or topic,
+            ),
+        }],
+    )
+
+    raw = response.content[0].text.strip()
+
+    # Strip markdown code fences if present
+    raw = re.sub(r"^```(?:json)?\s*", "", raw)
+    raw = re.sub(r"\s*```$", "", raw)
+
+    try:
+        metadata = json.loads(raw)
+    except json.JSONDecodeError:
+        # Fallback: build basic metadata
+        print(f"  Warning: Claude returned invalid JSON — using fallback metadata")
+        metadata = _fallback_metadata(topic)
+
+    # Enforce title length
+    if len(metadata.get("title", "")) > 90:
+        metadata["title"] = metadata["title"][:87] + "..."
+
+    return metadata
+
+
+def _fallback_metadata(topic: str) -> dict:
+    slug = topic.replace(" ", " ").title()
+    return {
+        "title": f"The Dark Truth About {slug[:50]}",
+        "description": (
+            f"{topic}\n\n"
+            "The truth they don't want you to see. "
+            "Dark facts, real statistics, uncomfortable truths.\n\n"
+            "#VoidPulse #DarkFacts #Shorts #ScaryTruths #Facts"
+        ),
+        "tags": [
+            "voidpulse", "dark facts", "scary truth", "shorts", "facts",
+            "uncomfortable truth", "real statistics", "viral", "youtube shorts",
+            "horror facts", "mind blowing", "society", "truth exposed",
+            "conspiracy", "documentary", "educational", "shocking",
+        ],
+    }
+
+
+# ── Best posting time ─────────────────────────────────────────────────────────
+
+def suggest_post_time(log_path: Path = Path("metadata/uploaded_videos.json")) -> str:
+    """
+    Analyze upload history and YouTube stats to suggest the best posting time.
+    Targets English-speaking audiences (US/UK) — critical for Iraq-based uploaders.
+    Returns a human-readable recommendation.
+    """
+    # Iraq is UTC+3. Target windows for English audiences:
+    #   21:00 Iraq = 18:00 UK = 13:00 US-Eastern  ← best balance
+    #   23:00 Iraq = 20:00 UK = 15:00 US-Eastern  ← UK prime time
+    #   02:00 Iraq = 23:00 UK = 18:00 US-Eastern  ← US prime time (late night)
+    ENGLISH_AUDIENCE_NOTE = (
+        "  [Iraq uploader tip] Upload at 21:00–23:00 Iraq time to reach\n"
+        "  English-speaking audiences: 18:00–20:00 UK / 13:00–15:00 US Eastern.\n"
+        "  Best days: Tuesday, Wednesday, Thursday."
+    )
+
+    if not log_path.exists():
+        return f"No upload history yet.\n{ENGLISH_AUDIENCE_NOTE}"
+
+    try:
+        log = json.loads(log_path.read_text(encoding="utf-8"))
+    except Exception:
+        return "Could not read upload log."
+
+    if not log:
+        return f"No uploads logged yet.\n{ENGLISH_AUDIENCE_NOTE}"
+
+    with_views = [e for e in log if e.get("views", 0) > 0]
+
+    if not with_views:
+        return f"Not enough performance data yet.\n{ENGLISH_AUDIENCE_NOTE}"
+
+    best = max(with_views, key=lambda x: x.get("views", 0))
+
+    uploaded_at = best.get("uploaded_at", "")
+    try:
+        hour = int(uploaded_at[11:13])
+        day_map = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+        from datetime import datetime
+        dt = datetime.fromisoformat(uploaded_at)
+        day = day_map[dt.weekday()]
+    except Exception:
+        return f"Best performer: could not parse upload time.\n{ENGLISH_AUDIENCE_NOTE}"
+
+    return (
+        f"Best performer uploaded at {hour:02d}:00 Iraq time on {day} "
+        f"→ got {best.get('views', 0):,} views\n"
+        f"  Recommendation: post around {hour:02d}:00–{(hour+2)%24:02d}:00 Iraq time on {day}s\n"
+        f"{ENGLISH_AUDIENCE_NOTE}"
+    )
+
+
+# ── Apply to YouTube upload ───────────────────────────────────────────────────
+
+def build_youtube_body(topic: str, hook: str, video_id_placeholder: str = "") -> dict:
+    """Return the full YouTube API request body with SEO metadata."""
+    print("  Generating SEO metadata with Claude...")
+    meta = generate_seo_metadata(topic, hook)
+
+    print(f"  Title : {meta['title']}")
+    print(f"  Tags  : {len(meta['tags'])} tags")
+
+    return {
+        "snippet": {
+            "title":                meta["title"],
+            "description":          meta["description"],
+            "tags":                 meta["tags"][:30],  # YouTube max 500 chars total
+            "categoryId":           "22",
+            "defaultLanguage":      "en",
+            "defaultAudioLanguage": "en",
+        },
+        "status": {
+            "privacyStatus":          "public",
+            "selfDeclaredMadeForKids": False,
+        },
+    }
+
+
+# ── Entry point ───────────────────────────────────────────────────────────────
+
+def main():
+    parser = argparse.ArgumentParser(description="VoidPulse SEO Optimizer")
+    parser.add_argument("--topic",  default=None, help="Video topic")
+    parser.add_argument("--script", default=None, help="Script markdown path")
+    parser.add_argument("--time",   action="store_true", help="Show best posting time")
+    args = parser.parse_args()
+
+    if args.time:
+        print("\n" + suggest_post_time())
+        return
+
+    if not args.topic and not args.script:
+        print("Error: provide --topic or --script")
+        return
+
+    topic = args.topic
+    hook  = ""
+
+    if args.script:
+        from generate_thumbnail import extract_hook_text
+        script_path = Path(args.script)
+        hook  = extract_hook_text(script_path)
+        topic = topic or script_path.stem.replace("_", " ")
+
+    print(f"\nSEO Optimizer — topic: {topic}")
+    meta = generate_seo_metadata(topic, hook)
+
+    print(f"\n{'─'*55}")
+    print(f"TITLE:\n  {meta['title']}\n")
+    print(f"DESCRIPTION:\n{meta['description']}\n")
+    print(f"TAGS ({len(meta['tags'])}):\n  {', '.join(meta['tags'])}")
+    print(f"{'─'*55}")
+
+    print(f"\n{suggest_post_time()}")
+
+
+if __name__ == "__main__":
+    main()
