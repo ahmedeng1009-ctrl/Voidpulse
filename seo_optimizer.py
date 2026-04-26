@@ -20,13 +20,20 @@ load_dotenv()
 
 # ── Prompt ────────────────────────────────────────────────────────────────────
 
-SYSTEM_PROMPT = """You are a YouTube SEO expert specializing in dark, viral short-form content.
-Your job is to write metadata that maximizes impressions, CTR, and watch time on YouTube Shorts.
+SYSTEM_PROMPT = """You are a YouTube SEO expert specializing in dark, viral short-form content
+that targets a GLOBAL English-speaking audience (US, UK, Canada, Australia, India, Europe).
+Your job is to write metadata that maximizes impressions, CTR, and watch time worldwide.
 
 Rules:
 - Title: max 70 chars, starts with a shocking hook word or number, no clickbait lies
-- Description: 3–4 lines, first line is the hook, includes 3–5 hashtags at the end
-- Tags: 18–22 tags, mix of broad (shorts, facts) and specific (topic keywords), all lowercase
+- Description: 4–5 lines, first line is the hook, ends with mix of English + multilingual hashtags
+  (include 2-3 English hashtags + 1-2 hashtags in: español, français, deutsch, हिन्दी)
+- Tags: 22–28 tags, lowercase, must include:
+    * Broad universal tags: shorts, viral, facts, mindblowing, documentary
+    * Topic-specific keywords (3-5)
+    * Region/audience tags: usa, uk, india, europe, worldwide
+    * Trending niches: psychology, conspiracy, dark truth, hidden facts
+    * No country-restrictive tags
 
 Always return valid JSON only — no markdown, no explanation."""
 
@@ -161,21 +168,104 @@ def suggest_post_time(log_path: Path = Path("metadata/uploaded_videos.json")) ->
     )
 
 
+# ── Localizations: نشر متعدد اللغات للوصول لجميع الدول ───────────────────────
+
+# ندعم اللغات الأكثر مشاهدة على يوتيوب — يغطي مليارات المستخدمين
+TARGET_LANGUAGES = {
+    "es": "Spanish",        # Spain + Latin America (500M+ speakers)
+    "fr": "French",         # France, Canada, Africa (300M+)
+    "de": "German",         # Germany, Austria, Switzerland (130M+)
+    "pt": "Portuguese",     # Brazil, Portugal (260M+)
+    "it": "Italian",        # Italy (60M+)
+    "nl": "Dutch",          # Netherlands, Belgium (25M+)
+    "hi": "Hindi",          # India (600M+)
+}
+
+
+def generate_localizations(title: str, description: str) -> dict:
+    """
+    تترجم العنوان والوصف إلى 7 لغات باستخدام Claude.
+    يوتيوب راح يعرض كل ترجمة للمستخدم حسب لغة جهازه/بلده.
+    """
+    import anthropic
+
+    client = anthropic.Anthropic()
+
+    langs_str = ", ".join(f"{code} ({name})" for code, name in TARGET_LANGUAGES.items())
+
+    prompt = f"""Translate this YouTube Short title and description to multiple languages.
+Keep the dramatic, dark, viral tone. Keep hashtags in English (don't translate them).
+Title max 70 chars in each language.
+
+ORIGINAL TITLE: {title}
+ORIGINAL DESCRIPTION: {description}
+
+Languages needed: {langs_str}
+
+Return ONLY valid JSON, no markdown, in this EXACT format:
+{{
+  "es": {{"title": "...", "description": "..."}},
+  "fr": {{"title": "...", "description": "..."}},
+  "de": {{"title": "...", "description": "..."}},
+  "pt": {{"title": "...", "description": "..."}},
+  "it": {{"title": "...", "description": "..."}},
+  "nl": {{"title": "...", "description": "..."}},
+  "hi": {{"title": "...", "description": "..."}}
+}}"""
+
+    response = client.messages.create(
+        model="claude-sonnet-4-6",
+        max_tokens=4096,
+        messages=[{"role": "user", "content": prompt}],
+    )
+
+    raw = response.content[0].text.strip()
+    raw = re.sub(r"^```(?:json)?\s*", "", raw)
+    raw = re.sub(r"\s*```$", "", raw)
+
+    try:
+        data = json.loads(raw)
+    except json.JSONDecodeError:
+        print(f"  Warning: Localizations JSON invalid — skipping translations")
+        return {}
+
+    valid = {}
+    for code, entry in data.items():
+        if isinstance(entry, dict) and entry.get("title") and entry.get("description"):
+            valid[code] = {
+                "title":       entry["title"][:95],
+                "description": entry["description"],
+            }
+    return valid
+
+
 # ── Apply to YouTube upload ───────────────────────────────────────────────────
 
 def build_youtube_body(topic: str, hook: str, video_id_placeholder: str = "") -> dict:
-    """Return the full YouTube API request body with SEO metadata."""
+    """Return the full YouTube API request body with SEO metadata + localizations."""
     print("  Generating SEO metadata with Claude...")
     meta = generate_seo_metadata(topic, hook)
 
     print(f"  Title : {meta['title']}")
     print(f"  Tags  : {len(meta['tags'])} tags")
 
-    return {
+    # Generate translations for global reach
+    print("  Generating localizations (7 languages) for global reach...")
+    try:
+        localizations = generate_localizations(meta["title"], meta["description"])
+        if localizations:
+            print(f"  Localizations OK: {', '.join(localizations.keys())}")
+        else:
+            print(f"  Localizations: none generated")
+    except Exception as e:
+        print(f"  Localizations failed ({e}) — uploading English only")
+        localizations = {}
+
+    body = {
         "snippet": {
             "title":                meta["title"],
             "description":          meta["description"],
-            "tags":                 meta["tags"][:30],  # YouTube max 500 chars total
+            "tags":                 meta["tags"][:30],
             "categoryId":           "22",
             "defaultLanguage":      "en",
             "defaultAudioLanguage": "en",
@@ -185,6 +275,11 @@ def build_youtube_body(topic: str, hook: str, video_id_placeholder: str = "") ->
             "selfDeclaredMadeForKids": False,
         },
     }
+
+    if localizations:
+        body["localizations"] = localizations
+
+    return body
 
 
 # ── Entry point ───────────────────────────────────────────────────────────────
