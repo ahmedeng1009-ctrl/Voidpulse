@@ -193,7 +193,7 @@ def step_generate_script(topic: str) -> Path:
 VoidPulse creates dark, dramatic, fact-based short videos that reveal uncomfortable truths about money, society, and power. The tone is serious, cinematic, and unsettling — never humorous.
 
 ═══════════════════════════════════════════════════════════════════════
-🔥 CRITICAL HOOK RULES (first 3 seconds — most important part):
+🔥 CRITICAL HOOK RULES (first 2 seconds — most important part):
 ═══════════════════════════════════════════════════════════════════════
 The HOOK must STOP a scrolling viewer in their tracks. Use ONE of these proven patterns:
 
@@ -214,7 +214,7 @@ The HOOK must STOP a scrolling viewer in their tracks. Use ONE of these proven p
      ✅ "Stop. Don't scroll. This will end your peace of mind."
 
 HOOK MUST BE:
-- ≤ 12 words (so it fits visually + spoken in 3 seconds)
+- ≤ 8 words (spoken in under 2 seconds — algorithm judges in first 2s)
 - Present tense, second person ("you", "your", "right now")
 - One specific number, percentage, or dollar amount
 - No filler words, no "today", no "in this video"
@@ -225,7 +225,7 @@ SCRIPT FORMAT (follow exactly):
 
 # {TOPIC TITLE} | YouTube Short Script
 **Niche:** Scary Real Statistics Visualized
-**Duration:** ~50 seconds
+**Duration:** ~32 seconds
 **Style:** Dramatic / Conspiracy-core
 
 ---
@@ -234,28 +234,28 @@ SCRIPT FORMAT (follow exactly):
 
 ---
 
-**[HOOK — 0:00–0:05]**
+**[HOOK — 0:00–0:02]**
 > *[Stage direction]*
 
-"Spoken line — MUST follow the hook rules above."
+"Spoken line — MUST follow the hook rules above. ≤ 8 words."
 
 ---
 
-**[BUILD — 0:05–0:20]**
+**[BUILD — 0:02–0:15]**
 > *[Stage direction]*
 
 "Spoken line with **bold stat**."
 
 ---
 
-**[TWIST — 0:20–0:35]**
+**[TWIST — 0:15–0:25]**
 > *[Stage direction]*
 
 "Spoken line."
 
 ---
 
-**[OUTRO / CTA — 0:35–0:50]**
+**[OUTRO / CTA — 0:25–0:32]**
 > *[Stage direction]*
 
 "Closing line."

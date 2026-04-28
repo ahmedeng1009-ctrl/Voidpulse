@@ -43,10 +43,10 @@ FPS           = 30
 BG_COLOR      = (5, 5, 10)
 
 SECTION_TIMES = {
-    "HOOK":  (0,  5),
-    "BUILD": (5,  20),
-    "TWIST": (20, 35),
-    "OUTRO": (35, 50),
+    "HOOK":  (0,   2),
+    "BUILD": (2,  15),
+    "TWIST": (15, 25),
+    "OUTRO": (25, 32),
 }
 
 import platform as _platform
@@ -381,10 +381,10 @@ def make_red_atmosphere(duration: float):
 
 def make_twist_flash(total_duration: float):
     """Brief red flash at the TWIST section start (t=20s)."""
-    if 20.0 >= total_duration:
+    if 15.0 >= total_duration:
         return None
     flash = ColorClip(size=(WIDTH, HEIGHT), color=(220, 0, 0), duration=0.25)
-    return flash.with_opacity(0.45).with_start(20.0)
+    return flash.with_opacity(0.45).with_start(15.0)
 
 
 def make_hook_punch(total_duration: float) -> list:
@@ -446,7 +446,7 @@ def make_background_clip(clip_paths: list[Path], duration: float,
     - Random start point inside each source clip → same clip looks different on reuse
     - Order is reshuffled every cycle so no pattern repeats
     - Darkened 68% so text stays readable
-    Result: a 50s video gets ~12–18 cuts instead of 5 long shots.
+    Result: a 32s video gets ~8–12 cuts instead of 5 long shots.
     """
     if not clip_paths:
         return ColorClip(size=(WIDTH, HEIGHT), color=BG_COLOR, duration=duration)
@@ -788,12 +788,12 @@ def build_sfx_timeline(sfx: dict[str, Path],
     Cinematic event design:
       0.00s  → BOOM (the cinematic hook punch — sub-bass drop)
       0.10s  → whoosh_short (whip into the hook line)
-      5.00s  → whoosh (BUILD section transition)
+      2.00s  → whoosh (BUILD section transition)
       stat-  → tick or glitch 50ms before each stat overlay
-      16.0s  → riser (4s tension build to TWIST)
-      20.0s  → BOOM (THE drop — biggest moment of the video)
-      35.0s  → whoosh (OUTRO transition)
-      45.0s  → whoosh_short (closing punch into final line)
+      12.0s  → riser (3s tension build to TWIST)
+      15.0s  → BOOM (THE drop — biggest moment of the video)
+      25.0s  → whoosh (OUTRO transition)
+      30.0s  → whoosh_short (closing punch into final line)
     """
     events: list[tuple[float, str, float]] = []
 
@@ -808,7 +808,7 @@ def build_sfx_timeline(sfx: dict[str, Path],
     add(0.10, "whoosh_short", 0.65)
 
     # BUILD transition
-    add(5.00, "whoosh", 0.70)
+    add(2.00, "whoosh", 0.70)
 
     # Per-stat ticks (alternate tick/glitch for variety)
     if stats:
@@ -816,23 +816,23 @@ def build_sfx_timeline(sfx: dict[str, Path],
             t = stat.get("start", 0) - 0.05
             if t < 0.5:                    # don't double up with hook punch
                 continue
-            if 19.0 < t < 21.0:            # don't clash with twist boom
+            if 14.0 < t < 16.0:            # don't clash with twist boom
                 continue
             sfx_name = "tick" if i % 2 == 0 else "glitch"
             add(t, sfx_name, 0.55)
 
     # TWIST tension build
-    twist_t = 20.0
+    twist_t = 15.0
     if twist_t < total_duration:
-        # Riser starts 4s before twist (or as much as fits)
-        riser_start = max(twist_t - 4.0, 5.5)
+        # Riser starts 3s before twist (or as much as fits)
+        riser_start = max(twist_t - 3.0, 2.5)
         add(riser_start, "riser", 0.60)
         # The drop
         add(twist_t, "boom", 1.00)
 
     # OUTRO
-    add(35.0, "whoosh", 0.70)
-    add(45.0, "whoosh_short", 0.55)
+    add(25.0, "whoosh", 0.70)
+    add(30.0, "whoosh_short", 0.55)
 
     # Sort by start time for cleaner debug output
     events.sort(key=lambda e: e[0])
