@@ -64,7 +64,7 @@ jobs:
 
       # ── 6. Run pipeline ───────────────────────────────────────────────────────
       - name: Run VoidPulse pipeline
-        run: python run_pipeline.py
+        run: python run_pipeline.py --smart
 
       # ── 7. حفظ الـ logs كـ artifact ──────────────────────────────────────────
       - name: Upload logs

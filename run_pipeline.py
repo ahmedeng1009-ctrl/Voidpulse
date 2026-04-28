@@ -57,6 +57,7 @@ def setup_logging() -> Path:
 # ── Topics pool — rotated automatically ──────────────────────────────────────
 
 TOPICS = [
+    # ── Original 15 ──────────────────────────────────────────────────────────
     "The dark history of how social media hijacks your brain",
     "How much money billionaires make while you sleep",
     "The terrifying scale of ocean plastic pollution",
@@ -72,6 +73,38 @@ TOPICS = [
     "How your phone is making you dumber every day",
     "The dark reality of factory farming",
     "How governments use fear to control populations",
+    # ── Body & health ─────────────────────────────────────────────────────────
+    "How your deodorant is silently poisoning your lymph nodes every day",
+    "How your sunscreen is loading your bloodstream with toxic chemicals right now",
+    "How your plastic water bottle is leaching hormones into every sip",
+    "How sitting eight hours a day is accelerating your cellular aging",
+    "How your toothpaste is quietly destroying your gut microbiome",
+    "How your morning coffee is slowly wrecking your cortisol levels forever",
+    "How your shampoo strips the natural defenses your scalp needs to survive",
+    # ── Food & corporations ───────────────────────────────────────────────────
+    "How sugar companies paid scientists to blame fat for the heart disease epidemic",
+    "How supermarkets are scientifically designed to override your willpower",
+    "How your child's school lunch was designed by junk food corporations",
+    "How sports drinks are engineered to keep you dehydrated and buying more",
+    "How the snack food industry deliberately engineers portion blindness into you",
+    # ── Money & debt ──────────────────────────────────────────────────────────
+    "How central banks legally print money that silently steals your savings",
+    "How your pension fund is quietly betting against your retirement",
+    "How grocery loyalty cards sell your health data to insurance companies",
+    "How the diamond industry invented a tradition to sell you worthless rocks",
+    "How your electric bill hides fees corporations legally steal from you every month",
+    "How pharmaceutical companies create diseases to sell you the cure",
+    # ── Tech & attention ──────────────────────────────────────────────────────
+    "How your streaming service is engineered to destroy your sleep cycle",
+    "How your gym membership is designed so you never actually go",
+    "How news algorithms are built to keep you anxious and coming back",
+    "How your car's air freshener is filling your lungs with carcinogens",
+    # ── Power & society ───────────────────────────────────────────────────────
+    "How social credit systems are already silently operating in your country",
+    "How cosmetic companies sell you solutions to problems they manufactured",
+    "How the opioid crisis was deliberately engineered by three pharmaceutical families",
+    "How your landlord legally traps you in a lifetime of debt by design",
+    "How the education system was redesigned to produce workers not thinkers",
 ]
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -103,23 +136,37 @@ def with_retry(fn, label: str, retries: int = 2, delay: int = 15):
                 raise
 
 
-def pick_topic(use_trends: bool = False) -> str:
-    if use_trends:
+def pick_topic(use_trends: bool = False, use_smart: bool = False) -> str:
+    used_file = Path("metadata/used_topics.txt")
+    used_file.parent.mkdir(exist_ok=True)
+
+    def _log_used(t: str):
+        with open(used_file, "a", encoding="utf-8") as f:
+            f.write(t + "\n")
+
+    # 1️⃣ Smart topics — learn from past performance
+    if use_smart:
+        try:
+            from smart_topics import get_smart_topic
+            topic = get_smart_topic()
+            if topic:
+                _log_used(topic)
+                return topic
+            print("  [Smart] Insufficient data — falling back to trending")
+        except Exception as e:
+            print(f"  [Smart] Failed ({e}) — falling back to trending")
+
+    # 2️⃣ Trending topics
+    if use_trends or use_smart:
         try:
             from trending_topics import get_topic_for_today
             topic = get_topic_for_today(use_trends=True)
-            # Log to used_topics
-            used_file = Path("metadata/used_topics.txt")
-            used_file.parent.mkdir(exist_ok=True)
-            with open(used_file, "a", encoding="utf-8") as f:
-                f.write(topic + "\n")
+            _log_used(topic)
             return topic
         except Exception as e:
             print(f"  Trending topics failed ({e}) — using static pool")
 
-    used_file = Path("metadata/used_topics.txt")
-    used_file.parent.mkdir(exist_ok=True)
-
+    # 3️⃣ Static pool fallback
     used = set()
     if used_file.exists():
         used = set(used_file.read_text(encoding="utf-8").splitlines())
@@ -130,8 +177,7 @@ def pick_topic(use_trends: bool = False) -> str:
         available = TOPICS
 
     topic = random.choice(available)
-    with open(used_file, "a", encoding="utf-8") as f:
-        f.write(topic + "\n")
+    _log_used(topic)
     return topic
 
 
@@ -146,8 +192,36 @@ def step_generate_script(topic: str) -> Path:
 
 VoidPulse creates dark, dramatic, fact-based short videos that reveal uncomfortable truths about money, society, and power. The tone is serious, cinematic, and unsettling — never humorous.
 
+═══════════════════════════════════════════════════════════════════════
+🔥 CRITICAL HOOK RULES (first 3 seconds — most important part):
+═══════════════════════════════════════════════════════════════════════
+The HOOK must STOP a scrolling viewer in their tracks. Use ONE of these proven patterns:
+
+  A) SHOCKING STAT FIRST: Open with the most disturbing number from the topic.
+     ❌ Bad:  "Today we'll talk about plastic in your body"
+     ✅ Good: "There's a credit card of plastic in your bloodstream RIGHT NOW."
+
+  B) DIRECT THREAT TO VIEWER: Make it personal, present-tense, about THEM.
+     ❌ Bad:  "Some companies engineer addictive food"
+     ✅ Good: "Your last meal was designed in a lab to make you eat more."
+
+  C) CONTRADICTION BOMB: State something that breaks their assumption.
+     ❌ Bad:  "Sleep is important"
+     ✅ Good: "You're sleeping 8 hours and still dying faster than ever."
+
+  D) PATTERN INTERRUPT: A 3-word sharp claim, then explanation.
+     ✅ "They lied to you. About everything you eat."
+     ✅ "Stop. Don't scroll. This will end your peace of mind."
+
+HOOK MUST BE:
+- ≤ 12 words (so it fits visually + spoken in 3 seconds)
+- Present tense, second person ("you", "your", "right now")
+- One specific number, percentage, or dollar amount
+- No filler words, no "today", no "in this video"
+
+═══════════════════════════════════════════════════════════════════════
+
 SCRIPT FORMAT (follow exactly):
-Each script must use this markdown structure:
 
 # {TOPIC TITLE} | YouTube Short Script
 **Niche:** Scary Real Statistics Visualized
@@ -163,7 +237,7 @@ Each script must use this markdown structure:
 **[HOOK — 0:00–0:05]**
 > *[Stage direction]*
 
-"Spoken line."
+"Spoken line — MUST follow the hook rules above."
 
 ---
 
@@ -220,13 +294,67 @@ Each script must use this markdown structure:
     return script_path
 
 
+# ── Voice pool — 8 dramatic ElevenLabs voices, one rotated per video ─────────
+
+VOICE_POOL = [
+    ("Adam",      "pNInz6obpgDQGcFmaJgB"),  # Deep American male
+    ("Antoni",    "ErXwobaYiN019PkySvjV"),  # Well-rounded male
+    ("Arnold",    "VR6AewLTigWG4xSOukaG"),  # Crisp serious male
+    ("Daniel",    "onwK4e9ZLuTAKqWW03F9"),  # Authoritative British male
+    ("Brian",     "nPczCjzI2devNBz1zQrb"),  # Deep narrator male
+    ("Bill",      "pqHfZKP75CvOlQylNhV4"),  # Older narrative male
+    ("Charlotte", "XB0fDUnXU5powFXDhCwa"),  # Mysterious female
+    ("Alice",     "Xb7hH8MSUJpSbSDYk0k2"),  # Confident British female
+]
+
+
+def pick_random_voice() -> tuple[str, str]:
+    """Return (name, voice_id) — different voice each video."""
+    return random.choice(VOICE_POOL)
+
+
+# ── Microsoft Edge TTS — free, unlimited fallback ─────────────────────────────
+# Used automatically when ElevenLabs quota is exhausted. Voice quality is
+# surprisingly close to premium services (Microsoft Cognitive Services Neural).
+
+EDGE_VOICE_POOL = [
+    ("Guy",      "en-US-GuyNeural"),       # Mature American male
+    ("Davis",    "en-US-DavisNeural"),     # Dramatic American male
+    ("Tony",     "en-US-TonyNeural"),      # Deep American male
+    ("Roger",    "en-US-RogerNeural"),     # Confident American male
+    ("Ryan",     "en-GB-RyanNeural"),      # British male
+    ("Thomas",   "en-GB-ThomasNeural"),    # British male
+    ("Aria",     "en-US-AriaNeural"),      # American female
+    ("Sonia",    "en-GB-SoniaNeural"),     # Mysterious British female
+]
+
+
+def edge_tts_voiceover(text: str, output_path: Path) -> Path:
+    """
+    Free fallback TTS using Microsoft Edge's neural voices.
+    Unlimited usage, no API key required.
+    """
+    import asyncio
+    import edge_tts
+
+    voice_name, voice_id = random.choice(EDGE_VOICE_POOL)
+    print(f"  [Edge TTS fallback] Voice: {voice_name} ({voice_id})")
+
+    async def _run():
+        # rate=-5% adds slight slowdown for dramatic delivery
+        communicate = edge_tts.Communicate(text, voice_id, rate="-5%")
+        await communicate.save(str(output_path))
+
+    asyncio.run(_run())
+    return output_path
+
+
 # ── Step 2: Generate Voiceover ────────────────────────────────────────────────
 
 def step_generate_voiceover(script_path: Path) -> Path:
     log("STEP 2: Generating voiceover")
 
     import re as _re
-    from elevenlabs.client import ElevenLabs
 
     text = script_path.read_text(encoding="utf-8")
     script_match = _re.search(r"## SCRIPT(.*?)(## PRODUCTION NOTES|## STATS|$)", text, re.DOTALL)
@@ -246,24 +374,44 @@ def step_generate_voiceover(script_path: Path) -> Path:
     full_text = "\n\n".join(spoken)
     print(f"  Extracted {len(spoken)} spoken lines ({len(full_text)} chars)")
 
-    client = ElevenLabs(api_key=os.getenv("ELEVENLABS_API_KEY"))
-    audio_stream = client.text_to_speech.convert(
-        voice_id="pNInz6obpgDQGcFmaJgB",
-        text=full_text,
-        model_id="eleven_turbo_v2_5",
-        output_format="mp3_44100_128",
-    )
-
     output_dir  = Path("audio/voiceover")
     output_dir.mkdir(parents=True, exist_ok=True)
     audio_path  = output_dir / (script_path.stem + ".mp3")
 
-    with open(audio_path, "wb") as f:
-        for chunk in audio_stream:
-            f.write(chunk)
+    # 1️⃣ Try ElevenLabs first (premium quality)
+    elevenlabs_key = os.getenv("ELEVENLABS_API_KEY", "").strip()
+    if elevenlabs_key:
+        try:
+            from elevenlabs.client import ElevenLabs
 
-    print(f"  Voiceover saved: {audio_path}")
-    return audio_path
+            voice_name, voice_id = pick_random_voice()
+            print(f"  ElevenLabs voice: {voice_name}")
+
+            client = ElevenLabs(api_key=elevenlabs_key)
+            audio_stream = client.text_to_speech.convert(
+                voice_id=voice_id,
+                text=full_text,
+                model_id="eleven_turbo_v2_5",
+                output_format="mp3_44100_128",
+            )
+
+            with open(audio_path, "wb") as f:
+                for chunk in audio_stream:
+                    f.write(chunk)
+
+            print(f"  Voiceover saved (ElevenLabs): {audio_path}")
+            return audio_path
+
+        except Exception as e:
+            err_str = str(e)
+            if "quota_exceeded" in err_str or "401" in err_str or "credits" in err_str.lower():
+                print(f"  ⚠️  ElevenLabs quota exhausted — switching to Edge TTS (free, unlimited)")
+            else:
+                print(f"  ⚠️  ElevenLabs failed ({type(e).__name__}: {err_str[:120]})")
+                print(f"      Falling back to Edge TTS")
+
+    # 2️⃣ Fallback: Microsoft Edge TTS (free, unlimited)
+    return edge_tts_voiceover(full_text, audio_path)
 
 
 # ── Step 3: Generate Video ────────────────────────────────────────────────────
@@ -284,31 +432,48 @@ def step_generate_video(script_path: Path, audio_path: Path,
     from moviepy import AudioFileClip, CompositeVideoClip
 
     # Background selection — fetch multiple topic-specific clips
+    # Per-video cache dir so each upload gets fresh, never-reused Pexels footage
     bg_queries = gv.get_background_queries(topic)
-    cache_dir  = Path("video/backgrounds") / re.sub(r"\W+", "_", topic)[:40]
-    clip_paths = gv.fetch_multiple_clips(bg_queries, cache_dir)
+    topic_slug = re.sub(r"\W+", "_", topic)[:40]
+    cache_dir  = Path("video/backgrounds") / topic_slug
+    clip_paths = gv.fetch_multiple_clips(bg_queries, cache_dir, topic_label=topic)
 
     sections       = gv.extract_sections(script_path)
     voiceover      = AudioFileClip(str(audio_path))
     total_duration = voiceover.duration
 
-    # Mix music via ffmpeg
+    # Stat overlays — extract early so SFX ticks can sync to stat reveals
+    stats = gv.extract_stats(sections, total_duration)
+
+    # Mix voiceover + music + cinematic SFX timeline (synced to stats)
     if not no_music:
         music_path       = gv.get_music_path(total_duration)
-        mixed_audio_path = gv.mix_audio_with_sfx(audio_path, music_path, music_vol, total_duration)
+        mixed_audio_path = gv.mix_audio_with_sfx(
+            audio_path, music_path, music_vol, total_duration, stats=stats)
         final_audio      = AudioFileClip(str(mixed_audio_path))
     else:
-        final_audio = voiceover
+        # Even with no music we still want SFX
+        mixed_audio_path = gv.mix_audio_with_sfx(
+            audio_path, None, 0.0, total_duration, stats=stats)
+        final_audio      = AudioFileClip(str(mixed_audio_path))
 
     bg         = gv.make_background_clip(clip_paths, total_duration)
     text_clips = gv.make_karaoke_clips(sections, total_duration)
     print(f"  {len(text_clips)} karaoke phrase clips")
+
+    stat_clips = gv.make_stat_overlays(stats)
+    print(f"  {len(stat_clips)} statistic overlays: {[s['text'] for s in stats]}")
 
     layers = [bg, gv.make_red_atmosphere(total_duration)]
     vignette = gv.make_vignette_overlay(total_duration)
     if vignette:
         layers.append(vignette)
     layers.extend(text_clips)
+    layers.extend(stat_clips)
+
+    # 🔥 Hook punch — pattern-interrupt flash in first 0.3s
+    layers.extend(gv.make_hook_punch(total_duration))
+
     twist = gv.make_twist_flash(total_duration)
     if twist:
         layers.append(twist)
@@ -359,7 +524,13 @@ def step_upload_youtube(video_path: Path, thumbnail_path: Path | None,
     from googleapiclient.discovery import build
     from googleapiclient.http import MediaFileUpload
 
-    SCOPES = ["https://www.googleapis.com/auth/youtube.upload"]
+    # youtube.upload alone is NOT enough for thumbnails.set — we need force-ssl
+    # which grants both video upload + thumbnail set + read access
+    SCOPES = [
+        "https://www.googleapis.com/auth/youtube.upload",
+        "https://www.googleapis.com/auth/youtube.force-ssl",
+        "https://www.googleapis.com/auth/youtube.readonly",
+    ]
     TOKEN_FILE  = "token.json"
     SECRET_FILE = "client_secret.json"
 
@@ -482,6 +653,9 @@ def main():
                         help="Music volume 0.0–1.0 (default 0.15)")
     parser.add_argument("--trending",    action="store_true",
                         help="Pick topic from Google Trends instead of static pool")
+    parser.add_argument("--smart",       action="store_true",
+                        help="Pick topic via analytics-driven analysis of past performance "
+                             "(falls back to --trending then static pool)")
     parser.add_argument("--ig-video-url", default=None,
                         help="Public HTTPS URL for Instagram video (required for Instagram)")
     args = parser.parse_args()
@@ -495,7 +669,7 @@ def main():
     print(f"  Log: {log_path}")
     print(f"{'#'*55}")
 
-    topic = args.topic or pick_topic(use_trends=args.trending)
+    topic = args.topic or pick_topic(use_trends=args.trending, use_smart=args.smart)
     print(f"\n  Topic     : {topic}")
     print(f"  Platforms : {', '.join(args.platforms) if not args.skip_upload else 'none (--skip-upload)'}")
     print(f"  Music     : {'off' if args.no_music else f'on ({int(args.music_vol*100)}%)'}")

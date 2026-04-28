@@ -26,8 +26,10 @@ Your job is to write metadata that maximizes impressions, CTR, and watch time wo
 
 Rules:
 - Title: max 70 chars, starts with a shocking hook word or number, no clickbait lies
-- Description: 4–5 lines, first line is the hook, ends with mix of English + multilingual hashtags
-  (include 2-3 English hashtags + 1-2 hashtags in: español, français, deutsch, हिन्दी)
+- Description: 4–5 lines, first line is the hook, MUST end with hashtags where #Shorts is
+  the very first hashtag (critical for YouTube to classify as a Short), followed by
+  2-3 English hashtags + 1-2 hashtags in: español, français, deutsch, हिन्दी
+  Example ending: #Shorts #VoidPulse #DarkFacts #Facts #Shorts #Hechos #Faits
 - Tags: 22–28 tags, lowercase, must include:
     * Broad universal tags: shorts, viral, facts, mindblowing, documentary
     * Topic-specific keywords (3-5)
@@ -91,6 +93,11 @@ def generate_seo_metadata(topic: str, hook: str = "") -> dict:
     # Enforce title length
     if len(metadata.get("title", "")) > 90:
         metadata["title"] = metadata["title"][:87] + "..."
+
+    # Guarantee #Shorts is in the description — required for YouTube to classify as a Short
+    desc = metadata.get("description", "")
+    if "#Shorts" not in desc and "#shorts" not in desc:
+        metadata["description"] = desc.rstrip() + "\n#Shorts #VoidPulse #DarkFacts"
 
     return metadata
 
@@ -242,12 +249,13 @@ Return ONLY valid JSON, no markdown, in this EXACT format:
 # ── Apply to YouTube upload ───────────────────────────────────────────────────
 
 def build_youtube_body(topic: str, hook: str, video_id_placeholder: str = "") -> dict:
-    """Return the full YouTube API request body with SEO metadata + localizations."""
+    """Return the full YouTube API request body with SEO metadata + localizations + affiliates."""
     print("  Generating SEO metadata with Claude...")
     meta = generate_seo_metadata(topic, hook)
 
     print(f"  Title : {meta['title']}")
     print(f"  Tags  : {len(meta['tags'])} tags")
+
 
     # Generate translations for global reach
     print("  Generating localizations (7 languages) for global reach...")

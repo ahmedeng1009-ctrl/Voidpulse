@@ -1,14 +1,18 @@
 """
 VoidPulse Trending Topics
-Fetches today's trending searches from Google Trends and uses Claude
-to convert them into VoidPulse-style dark/dramatic video topics.
+Fetches today's trending topics using Gemini (Google Search grounding) or
+YouTube Trending API, then uses Claude to reframe them as VoidPulse-style
+dark/dramatic video topics.
 
 Usage:
     python trending_topics.py              # show trending topics
     python trending_topics.py --pick       # pick best topic and print it
-    python trending_topics.py --country us # specify country (default: us)
+    python trending_topics.py --region us  # specify region (default: US)
+    python trending_topics.py --no-gemini  # skip Gemini, use YouTube only
 
-Requires: pip install pytrends
+Requires:
+    pip install google-genai
+    GEMINI_API_KEY=your_key  in .env
 """
 
 import argparse
@@ -19,7 +23,7 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv(Path(__file__).parent / ".env", encoding="utf-8", override=True)
 
 # ── VoidPulse topic categories (for Claude context) ───────────────────────────
 
@@ -35,6 +39,33 @@ VOIDPULSE_THEMES = [
     "pharmaceutical industry, drug prices, healthcare",
     "work culture, burnout, corporate exploitation",
 ]
+
+# ── Google Trends RSS (مجاني — بدون API key) ─────────────────────────────────
+
+def fetch_trends_with_rss(region: str = "US", count: int = 20) -> list[str]:
+    """
+    Fetch real-time trending topics from Google Trends RSS feed.
+    100% free, no API key, no billing required.
+    """
+    import urllib.request
+    import xml.etree.ElementTree as ET
+
+    url = f"https://trends.google.com/trending/rss?geo={region}"
+    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+
+    with urllib.request.urlopen(req, timeout=10) as resp:
+        xml_data = resp.read()
+
+    root = ET.fromstring(xml_data)
+    topics = []
+    for item in root.findall(".//item"):
+        title = item.findtext("title", "").strip()
+        if title and len(title) > 3:
+            topics.append(title)
+
+    print(f"  Google Trends RSS: fetched {len(topics)} trending topics")
+    return topics[:count]
+
 
 # ── YouTube Trending fetcher ──────────────────────────────────────────────────
 
@@ -103,7 +134,7 @@ def trends_to_voidpulse_topics(trends: list[str], count: int = 5) -> list[str]:
     if not trends:
         return []
 
-    client   = anthropic.Anthropic()
+    client   = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
     themes   = "\n".join(f"- {t}" for t in VOIDPULSE_THEMES)
     trend_list = "\n".join(f"- {t}" for t in trends[:25])
 
@@ -155,10 +186,11 @@ EVERGREEN_TOPICS = [
 
 
 def get_topic_for_today(region: str = "US",
-                        use_trends: bool = True) -> str:
+                        use_trends: bool = True,
+                        use_gemini: bool = True) -> str:
     """
     Get the best topic for today's video.
-    Tries YouTube Trending first, falls back to evergreen pool.
+    Priority: Gemini (Google Search) → YouTube Trending → Evergreen pool.
     """
     used_file = Path("metadata/used_topics.txt")
     used = set()
@@ -166,6 +198,21 @@ def get_topic_for_today(region: str = "US",
         used = set(used_file.read_text(encoding="utf-8").splitlines())
 
     if use_trends:
+        # 1️⃣ Try Google Trends RSS (مجاني — بدون API key)
+        try:
+            print("  Checking Google Trends RSS...")
+            trends = fetch_trends_with_rss(region=region)
+            if trends:
+                vp_topics = trends_to_voidpulse_topics(trends, count=8)
+                fresh = [t for t in vp_topics if t not in used]
+                if fresh:
+                    topic = fresh[0]
+                    print(f"  [Google Trends] Trending topic selected: {topic}")
+                    return topic
+        except Exception as e:
+            print(f"  Google Trends RSS failed ({e}) — trying YouTube API...")
+
+        # 2️⃣ Fall back to YouTube Trending API
         print("  Checking YouTube Trending...")
         trends = fetch_youtube_trending(region=region)
         if trends:
@@ -173,16 +220,16 @@ def get_topic_for_today(region: str = "US",
             fresh = [t for t in vp_topics if t not in used]
             if fresh:
                 topic = fresh[0]
-                print(f"  Trending topic selected: {topic}")
+                print(f"  [YouTube] Trending topic selected: {topic}")
                 return topic
             print("  All trending topics already used — falling back to evergreen")
 
-    # Evergreen fallback
+    # 3️⃣ Evergreen fallback
     available = [t for t in EVERGREEN_TOPICS if t not in used]
     if not available:
         available = EVERGREEN_TOPICS
     topic = random.choice(available)
-    print(f"  Evergreen topic selected: {topic}")
+    print(f"  [Evergreen] Topic selected: {topic}")
     return topic
 
 
@@ -190,12 +237,12 @@ def get_topic_for_today(region: str = "US",
 
 def main():
     parser = argparse.ArgumentParser(description="VoidPulse Trending Topics")
-    parser.add_argument("--pick",    action="store_true",
+    parser.add_argument("--pick",       action="store_true",
                         help="Pick best topic for today and print it")
-    parser.add_argument("--region",    default="US",
-                        help="YouTube Trending region code (default: US)")
-    parser.add_argument("--no-trends", action="store_true",
-                        help="Skip YouTube Trending, use evergreen pool only")
+    parser.add_argument("--region",     default="US",
+                        help="Region code (default: US)")
+    parser.add_argument("--no-trends",  action="store_true",
+                        help="Skip all trending sources, use evergreen pool only")
     args = parser.parse_args()
 
     if args.pick:
@@ -207,8 +254,14 @@ def main():
         return
 
     # Show trending topics without picking
-    print(f"\nFetching YouTube Trending ({args.region})...")
-    trends = fetch_youtube_trending(args.region)
+    print(f"\nFetching Google Trends RSS ({args.region})...")
+    try:
+        trends = fetch_trends_with_rss(args.region)
+        source = "Google Trends RSS"
+    except Exception as e:
+        print(f"  RSS failed ({e}) — falling back to YouTube API")
+        trends = fetch_youtube_trending(args.region)
+        source = "YouTube API"
 
     if not trends:
         print("Could not fetch trends. Showing evergreen topics instead:")
@@ -216,7 +269,7 @@ def main():
             print(f"  • {t}")
         return
 
-    print(f"\nTop trends today:")
+    print(f"\nTop trends today ({source}):")
     for t in trends[:15]:
         print(f"  • {t}")
 
@@ -225,7 +278,7 @@ def main():
 
     print(f"\nVoidPulse topics from today's trends:")
     for t in vp_topics:
-        print(f"  ▶  {t}")
+        print(f"  >> {t}")
 
 
 if __name__ == "__main__":

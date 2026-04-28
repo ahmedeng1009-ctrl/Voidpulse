@@ -14,11 +14,13 @@ Usage:
 import argparse
 import json
 import os
+import random
 import re
 import sys
 import tempfile
 import urllib.request
 import urllib.parse
+from datetime import datetime
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -56,51 +58,106 @@ else:
     FONT_ARIAL_BD = "/usr/share/fonts/truetype/msttcorefonts/Arial_Bold.ttf"
 
 SECTION_STYLES = {
-    "HOOK":  {"color": "white",   "font_size": 88, "stroke_width": 4, "font": FONT_IMPACT},
-    "BUILD": {"color": "white",   "font_size": 68, "stroke_width": 2, "font": FONT_ARIAL_BD},
-    "TWIST": {"color": "#FF4444", "font_size": 74, "stroke_width": 3, "font": FONT_IMPACT},
-    "OUTRO": {"color": "white",   "font_size": 82, "stroke_width": 4, "font": FONT_IMPACT},
+    "HOOK":  {"color": "white",   "font_size": 110, "stroke_width": 6, "font": FONT_IMPACT},
+    "BUILD": {"color": "white",   "font_size": 68,  "stroke_width": 2, "font": FONT_ARIAL_BD},
+    "TWIST": {"color": "#FF4444", "font_size": 74,  "stroke_width": 3, "font": FONT_IMPACT},
+    "OUTRO": {"color": "white",   "font_size": 82,  "stroke_width": 4, "font": FONT_IMPACT},
 }
 
 # ── 7. Topic → multiple background queries ────────────────────────────────────
-# Each topic maps to 3 different Pexels queries for visual variety
+# Each topic maps to 6 different Pexels queries for richer visual variety
 
 TOPIC_BACKGROUND_MAP = [
-    (["ocean", "plastic", "sea", "water", "marine"],
-     ["dark ocean waves night", "underwater dark deep", "pollution water dark"]),
+    # ── Drinking water / chemicals / PFAS ─────────────────────────────────────
+    (["drinking water", "tap water", "water supply", "forever chemical", "pfas",
+      "fluoride", "contaminated water", "blood chemical"],
+     ["polluted river dark night", "industrial chemical plant dark", "water treatment plant night",
+      "dripping tap close up dark", "chemical barrels industrial dark", "toxic water pollution"]),
 
-    (["billionaire", "money", "wealth", "rich", "financial", "tax", "bank"],
-     ["dark rain city neon night", "stock market crash dark", "luxury car night city"]),
+    # ── Ocean / plastic / marine pollution ────────────────────────────────────
+    (["ocean", "plastic", "sea", "marine", "coral"],
+     ["dark ocean waves night", "underwater dark deep", "pollution water dark",
+      "stormy sea black", "dead fish ocean dark", "plastic floating sea"]),
 
-    (["social media", "phone", "screen", "algorithm", "internet", "brain"],
-     ["phone screen dark glow", "neon screen glitch dark", "social media addiction dark"]),
+    # ── Money / wealth / billionaire / wages / debt ───────────────────────────
+    (["billionaire", "money", "wealth", "rich", "financial", "tax", "bank",
+      "credit score", "debt", "loan", "mortgage", "wage", "salary", "poverty",
+      "inflation", "wall street", "stock"],
+     ["dark rain city neon night", "stock market crash dark", "luxury car night city",
+      "money burning fire", "wall street dark night", "gold coins falling dark"]),
 
-    (["food", "eat", "hunger", "farm", "agriculture", "factory", "animal", "meat"],
-     ["dark factory smoke", "industrial machinery dark", "foggy field night"]),
+    # ── Social media / phone / algorithm / streaming / attention ──────────────
+    (["social media", "phone", "screen", "algorithm", "internet", "brain",
+      "streaming", "netflix", "binge", "scroll", "tiktok", "dopamine",
+      "attention", "addic"],
+     ["phone screen dark glow", "neon screen glitch dark", "social media addiction dark",
+      "scrolling phone late night", "data code matrix dark", "broken screen glitch"]),
 
-    (["sleep", "insomnia", "tired", "dream"],
-     ["dark bedroom night shadows", "night city lights blur", "dark fog storm"]),
+    # ── Food / gut / processed / factory farming ──────────────────────────────
+    (["food", "eat", "hunger", "farm", "agriculture", "factory", "animal", "meat",
+      "gut", "processed", "ultra-processed", "microbiome", "sugar", "obesity",
+      "diet", "nutrition", "calorie"],
+     ["dark factory smoke night", "industrial machinery dark", "foggy field night",
+      "processed food packaging dark", "fast food close up dark", "chemical lab dark"]),
 
-    (["loneliness", "alone", "isolation", "society"],
-     ["empty street night fog", "person alone dark city", "dark rainy window"]),
+    # ── Sleep / mattress / bed / insomnia ─────────────────────────────────────
+    (["sleep", "insomnia", "tired", "dream", "mattress", "bed", "bedroom",
+      "eight hours", "rest", "pillow", "foam", "toxic bed"],
+     ["dark bedroom shadows night", "alarm clock dark room", "person lying bed dark",
+      "chemical factory smoke dark", "industrial foam production dark", "exhausted person dark"]),
 
-    (["fashion", "clothes", "textile", "pollution", "fast fashion"],
-     ["dark industrial smoke", "factory smoke pollution", "dark city rain"]),
+    # ── Loneliness / mental health / isolation ────────────────────────────────
+    (["loneliness", "alone", "isolation", "society", "mental health",
+      "depression", "anxiety", "connection", "community"],
+     ["empty street night fog", "person alone dark city", "dark rainy window",
+      "empty subway night", "shadow figure rain", "abandoned phone bench"]),
 
-    (["amazon", "cheap", "supply chain", "worker", "package"],
-     ["dark warehouse shadows", "shipping containers dark", "industrial night lights"]),
+    # ── Fashion / textile / environment ──────────────────────────────────────
+    (["fashion", "clothes", "textile", "pollution", "fast fashion", "garment",
+      "cotton", "synthetic fiber"],
+     ["dark industrial smoke", "factory smoke pollution", "dark city rain",
+      "textile factory workers dark", "clothing landfill dark", "sewing machine dark"]),
 
-    (["government", "fear", "control", "power", "surveillance"],
-     ["abandoned building dark", "cctv camera dark", "dark city surveillance"]),
+    # ── Amazon / supply chain / walmart / corporate labor ─────────────────────
+    (["amazon", "cheap", "supply chain", "worker", "package", "warehouse",
+      "walmart", "corporation", "retail", "delivery", "minimum wage"],
+     ["dark warehouse shadows", "shipping containers dark", "industrial night lights",
+      "conveyor belt boxes dark", "delivery trucks night", "packaging factory dark"]),
 
-    (["house", "rent", "afford", "real estate"],
-     ["dark city skyline rain", "empty apartments night", "dark urban street"]),
+    # ── Government / surveillance / control / privacy ─────────────────────────
+    (["government", "fear", "control", "power", "surveillance", "spy",
+      "nsa", "propaganda", "censorship", "data collection", "privacy"],
+     ["cctv camera dark sky", "dark city surveillance night", "riot police night",
+      "barbed wire fence dark", "drone flying dark sky", "hacker computer dark"]),
 
-    (["dumb", "stupid", "brain", "cognitive", "phone", "dumber"],
-     ["dark static glitch screen", "brain scan dark", "neon tech dark"]),
+    # ── Housing / real estate / rent / homeless ───────────────────────────────
+    (["house", "rent", "afford", "real estate", "housing", "landlord",
+      "property", "homelessness", "evict"],
+     ["dark city skyline rain", "empty apartments night", "dark urban street",
+      "for sale sign rain", "abandoned house dark", "construction crane night"]),
+
+    # ── Indoor air / household toxins / breathing ──────────────────────────────
+    (["indoor", "air inside", "home air", "household", "air quality",
+      "air pollution", "breathing", "lung", "dust", "mold"],
+     ["dark living room shadows night", "industrial smoke particles dark",
+      "air pollution city dark", "dust particles dark light",
+      "chemical fumes dark", "factory exhaust dark night"]),
+
+    # ── Cognitive decline / dumber / attention span ───────────────────────────
+    (["dumb", "stupid", "cognitive", "dumber", "attention span", "memory",
+      "iq", "intelligence", "brain damage"],
+     ["dark static glitch screen", "brain scan dark", "neon tech dark",
+      "tv static noise dark", "hypnotic spiral dark", "broken phone dark"]),
 ]
 
-DEFAULT_BG_QUERIES = ["dark horror atmosphere night", "dark fog forest night", "abandoned dark shadows"]
+DEFAULT_BG_QUERIES = [
+    "dark city rain night",
+    "industrial smoke pollution dark",
+    "abandoned building dark shadows",
+    "dark underground tunnel night",
+    "stormy clouds dark sky",
+    "dystopian city nighttime",
+]
 
 
 def get_background_queries(topic: str) -> list[str]:
@@ -112,18 +169,91 @@ def get_background_queries(topic: str) -> list[str]:
 
 
 # ── Pexels multi-clip fetcher ─────────────────────────────────────────────────
+# Anti-duplicate strategy:
+#   1. Global registry of every Pexels video ID ever downloaded → never reused
+#   2. Each topic's base queries are diversified into 12+ unique queries
+#      using random visual modifiers ("aerial", "neon", "drone shot", etc.)
+#   3. Pexels search returns up to 15 results per query — we randomly pick
+#      from the unused ones (not always the top result)
 
-def fetch_pexels_video(query: str, output_path: Path) -> Path | None:
-    """Download one vertical video from Pexels — exact same approach that worked originally."""
+USED_CLIPS_FILE = Path("metadata/used_clips.json")
+
+QUERY_MODIFIERS = [
+    "aerial",        "macro close up",  "slow motion",      "rainy",
+    "foggy",         "dystopian",       "noir",             "abandoned",
+    "drone shot",    "time lapse",      "atmospheric",      "neon",
+    "shadow",        "gritty",          "rain dripping",    "smoke",
+    "blurred",       "underground",     "twilight",         "moody",
+]
+
+DEFAULT_TARGET_CLIPS_PER_VIDEO = 12  # number of unique clips to fetch per video
+
+
+def load_used_clips() -> dict:
+    """Load global registry of every Pexels video ID we've ever used."""
+    if not USED_CLIPS_FILE.exists():
+        return {}
+    try:
+        return json.loads(USED_CLIPS_FILE.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return {}
+
+
+def save_used_clips(data: dict):
+    USED_CLIPS_FILE.parent.mkdir(parents=True, exist_ok=True)
+    USED_CLIPS_FILE.write_text(
+        json.dumps(data, indent=2, ensure_ascii=False),
+        encoding="utf-8",
+    )
+
+
+def diversify_queries(base_queries: list[str],
+                      target_count: int = DEFAULT_TARGET_CLIPS_PER_VIDEO) -> list[str]:
+    """
+    Expand a small pool of base queries into `target_count` unique varied queries
+    by mixing in random visual modifiers. Order is randomized per video so two
+    videos on the same topic get different sequences.
+    """
+    seen = set()
+    out  = []
+
+    # Start with the base queries (shuffled)
+    shuffled = list(base_queries)
+    random.shuffle(shuffled)
+    for q in shuffled:
+        if q not in seen:
+            out.append(q)
+            seen.add(q)
+
+    # Fill the rest with modifier+base combinations
+    attempts = 0
+    while len(out) < target_count and attempts < 200:
+        attempts += 1
+        base     = random.choice(base_queries)
+        modifier = random.choice(QUERY_MODIFIERS)
+        candidate = f"{modifier} {base}"
+        if candidate not in seen:
+            out.append(candidate)
+            seen.add(candidate)
+
+    return out[:target_count]
+
+
+def fetch_pexels_video(query: str, output_path: Path,
+                       used_ids: set[int]) -> tuple[Path, int] | None:
+    """
+    Download one vertical Pexels video that has NOT been used before.
+    Returns (path, video_id) on success, or None.
+    """
     api_key = os.getenv("PEXELS_API_KEY")
     if not api_key:
         return None
 
-    # Try the query, then a safe fallback
+    # Try the query first, then safe fallbacks
     for attempt_query in [query, "dark night", "dark forest", "city night"]:
         encoded = urllib.parse.quote(attempt_query)
         url = (f"https://api.pexels.com/videos/search"
-               f"?query={encoded}&orientation=portrait&per_page=5&size=medium")
+               f"?query={encoded}&orientation=portrait&per_page=15&size=medium")
         req = urllib.request.Request(url, headers={
             "Authorization": api_key,
             "User-Agent": "VoidPulse/1.0",
@@ -136,45 +266,88 @@ def fetch_pexels_video(query: str, output_path: Path) -> Path | None:
             print(f"  Pexels request failed ({e})")
             continue
 
-        videos = data.get("videos", [])
+        # Filter out videos we've already used in any past video
+        videos = [v for v in data.get("videos", []) if v.get("id") not in used_ids]
+        if not videos:
+            print(f"  All results for '{attempt_query}' already used — trying fallback")
+            continue
+
+        # Randomize order so we don't always pick the top result
+        random.shuffle(videos)
+
         for video in videos:
+            vid_id = video.get("id")
+            if not vid_id:
+                continue
             for vf in video.get("video_files", []):
                 if vf.get("file_type") == "video/mp4" and vf.get("link"):
                     try:
                         output_path.parent.mkdir(parents=True, exist_ok=True)
                         dl_req = urllib.request.Request(
                             vf["link"],
-                            headers={"User-Agent": "Mozilla/5.0", "Referer": "https://www.pexels.com/"}
+                            headers={"User-Agent": "Mozilla/5.0",
+                                     "Referer": "https://www.pexels.com/"}
                         )
                         with urllib.request.urlopen(dl_req, timeout=60) as resp:
                             output_path.write_bytes(resp.read())
-                        print(f"  Downloaded: {output_path.name}")
-                        return output_path
+                        print(f"  Downloaded: {output_path.name}  (id={vid_id})")
+                        return output_path, int(vid_id)
                     except Exception as e:
                         print(f"  Download failed: {e}")
                         continue
 
-    print(f"  Pexels: could not download — using dark background")
+    print(f"  Pexels: could not find unused clip for '{query}'")
     return None
 
 
-def fetch_multiple_clips(queries: list[str], cache_dir: Path) -> list[Path]:
-    """Fetch one clip per query, cache them locally."""
+def fetch_multiple_clips(queries: list[str], cache_dir: Path,
+                         topic_label: str = "",
+                         target_count: int = DEFAULT_TARGET_CLIPS_PER_VIDEO) -> list[Path]:
+    """
+    Fetch unique, never-before-used Pexels clips for this video.
+    - Diversifies queries with random modifiers
+    - Tracks every downloaded clip ID globally to prevent reuse
+    - Returns paths to local mp4 files
+    """
     cache_dir.mkdir(parents=True, exist_ok=True)
+
+    used_clips_db = load_used_clips()
+    used_ids      = {int(k) for k in used_clips_db.keys()}
+
+    # Expand to target_count diversified queries (shuffled)
+    queries = diversify_queries(queries, target_count=target_count)
+    print(f"  Diversified to {len(queries)} unique queries — anti-duplicate mode")
+
     clips = []
     for i, query in enumerate(queries):
-        slug      = re.sub(r"\W+", "_", query)[:40]
-        out_path  = cache_dir / f"{slug}.mp4"
+        slug     = re.sub(r"\W+", "_", query)[:40]
+        out_path = cache_dir / f"{slug}.mp4"
+
         if out_path.exists():
-            print(f"  Cached clip {i+1}: {out_path.name}")
+            # Cached from a previous run of THIS topic — safe to reuse here
+            print(f"  Cached clip {i+1}/{len(queries)}: {out_path.name}")
             clips.append(out_path)
-        else:
-            print(f"  Fetching clip {i+1}: '{query}'...")
-            result = fetch_pexels_video(query, out_path)
-            if result:
-                clips.append(result)
-            else:
-                print(f"  Could not fetch '{query}'")
+            continue
+
+        print(f"  Fetching clip {i+1}/{len(queries)}: '{query}'...")
+        result = fetch_pexels_video(query, out_path, used_ids)
+        if not result:
+            continue
+
+        path, video_id = result
+        clips.append(path)
+
+        # Register globally so this clip is never reused in future videos
+        used_ids.add(video_id)
+        used_clips_db[str(video_id)] = {
+            "query":      query,
+            "filename":   path.name,
+            "topic":      topic_label,
+            "downloaded": datetime.now().isoformat(timespec="seconds"),
+        }
+        save_used_clips(used_clips_db)
+
+    print(f"  Total unique clips for this video: {len(clips)}")
     return clips
 
 
@@ -214,6 +387,29 @@ def make_twist_flash(total_duration: float):
     return flash.with_opacity(0.45).with_start(20.0)
 
 
+def make_hook_punch(total_duration: float) -> list:
+    """
+    🔥 Pattern interrupt في أول 0.3 ثانية — يجبر المشاهد يوقف عن الـ scroll:
+       - فلاش أبيض ساطع (0.0–0.15s)
+       - فلاش أحمر داكن (0.15–0.3s)
+    """
+    if total_duration < 0.5:
+        return []
+
+    layers = []
+    # White punch — pure attention grabber
+    white_flash = (ColorClip(size=(WIDTH, HEIGHT), color=(255, 255, 255), duration=0.15)
+                   .with_opacity(0.85).with_start(0.0))
+    layers.append(white_flash)
+
+    # Red bleed-out
+    red_after = (ColorClip(size=(WIDTH, HEIGHT), color=(180, 0, 0), duration=0.18)
+                 .with_opacity(0.55).with_start(0.15))
+    layers.append(red_after)
+
+    return layers
+
+
 def apply_subtle_zoom(clip, zoom: float = 1.06):
     """Static zoom-in so background feels bigger/more cinematic."""
     zoomed = clip.resized(zoom)
@@ -242,12 +438,15 @@ def crop_to_vertical(clip: VideoFileClip) -> VideoFileClip:
     return clip.resized((WIDTH, HEIGHT))
 
 
-def make_background_clip(clip_paths: list[Path], duration: float):
+def make_background_clip(clip_paths: list[Path], duration: float,
+                         segment_min: float = 2.5, segment_max: float = 4.5):
     """
-    Build a background from multiple clips:
-    - Each clip plays for its natural duration (cropped to vertical)
-    - Clips cycle until total duration is covered
-    - Darkened 65% so text stays readable
+    Build a background from multiple clips with rapid, randomized cuts.
+    - Each segment is 2.5–4.5s (random) — way more cuts than before
+    - Random start point inside each source clip → same clip looks different on reuse
+    - Order is reshuffled every cycle so no pattern repeats
+    - Darkened 68% so text stays readable
+    Result: a 50s video gets ~12–18 cuts instead of 5 long shots.
     """
     if not clip_paths:
         return ColorClip(size=(WIDTH, HEIGHT), color=BG_COLOR, duration=duration)
@@ -264,18 +463,39 @@ def make_background_clip(clip_paths: list[Path], duration: float):
     if not loaded:
         return ColorClip(size=(WIDTH, HEIGHT), color=BG_COLOR, duration=duration)
 
-    # Apply subtle zoom to each clip for cinematic feel
-    loaded = [apply_subtle_zoom(c) for c in loaded]
-
-    # Cycle clips until we have enough footage
     combined = []
     total    = 0.0
+    indices  = list(range(len(loaded)))
+
+    # Build a sequence of short random segments
     while total < duration:
-        for clip in loaded:
-            combined.append(clip)
-            total += clip.duration
+        random.shuffle(indices)        # different order each cycle
+        for idx in indices:
+            clip = loaded[idx]
+
+            remaining = duration - total
+            if remaining <= 0.1:
+                break
+
+            # Random segment length within the configured window
+            seg_len = random.uniform(segment_min, segment_max)
+            seg_len = min(seg_len, clip.duration, remaining)
+            if seg_len < 1.0:
+                seg_len = min(clip.duration, remaining)
+
+            # Random start position inside the source clip
+            max_start = max(0.0, clip.duration - seg_len)
+            start     = random.uniform(0, max_start) if max_start > 0.05 else 0.0
+
+            segment = clip.subclipped(start, start + seg_len)
+            combined.append(apply_subtle_zoom(segment))
+            total += seg_len
+
             if total >= duration:
                 break
+
+    print(f"  Background built: {len(combined)} cuts across {duration:.1f}s "
+          f"(avg {duration/max(len(combined),1):.1f}s per cut)")
 
     bg = concatenate_videoclips(combined)
     bg = bg.subclipped(0, duration)
@@ -394,8 +614,18 @@ def mix_audio_to_file(voiceover_path: Path, music_path: Path | None,
 
 def generate_sfx(sfx_dir: Path) -> dict[str, Path]:
     """
-    Generate procedural SFX using numpy/scipy and cache them in audio/sfx/.
+    Generate procedural cinematic SFX using numpy/scipy and cache them in audio/sfx/.
     Returns a dict of {name: path}.
+
+    Library:
+      - boom        : Deep cinematic boom (sub-bass drop + click attack) for HOOK + TWIST
+      - whoosh      : 0.55s sweep transition for BUILD/OUTRO
+      - whoosh_short: 0.22s sharp swoosh for stat reveals
+      - riser       : 4s rising tension build before TWIST
+      - tick        : 0.10s digital tick for stat overlays (alt: glitch)
+      - glitch      : 0.15s digital noise burst for stat overlays
+      - heartbeat   : 0.6s double bass pulse (legacy, kept for compatibility)
+      - impact      : 0.4s sharp hit (legacy, kept for compatibility)
     """
     try:
         import numpy as np
@@ -408,39 +638,133 @@ def generate_sfx(sfx_dir: Path) -> dict[str, Path]:
     sr = 44100
     sfx = {}
 
-    # --- heartbeat.wav: low thump at video start ---
+    def _save(path: Path, mono: "np.ndarray", peak: float = 0.9):
+        mono   = mono / max(np.max(np.abs(mono)), 1e-9) * peak
+        stereo = np.column_stack([mono, mono]).astype(np.float32)
+        wavfile.write(str(path), sr, (stereo * 32767).astype(np.int16))
+
+    # --- boom.wav: cinematic deep boom (sub-bass drop) for HOOK + TWIST ---
+    boom_path = sfx_dir / "boom.wav"
+    if not boom_path.exists():
+        dur = 1.6
+        t   = np.linspace(0, dur, int(sr * dur), endpoint=False)
+        # Sub-bass falling sweep 90Hz → 35Hz with long tail
+        freq  = 90 - 55 * (1 - np.exp(-t * 4))
+        phase = 2 * np.pi * np.cumsum(freq) / sr
+        sub   = np.sin(phase)
+        # Click attack at very start (transient punch)
+        click_len    = int(sr * 0.012)
+        click_env    = np.exp(-np.linspace(0, 5, click_len))
+        click        = np.random.randn(click_len) * click_env
+        # Body envelope: instant attack, slow tail
+        env   = np.exp(-t * 1.4) * (1 - np.exp(-t * 80))
+        wave  = sub * env
+        wave[:click_len] += click * 0.7
+        _save(boom_path, wave, peak=0.95)
+        print(f"  SFX generated: boom.wav")
+    sfx["boom"] = boom_path
+
+    # --- whoosh.wav: improved 0.55s sweep with high-pass air ---
+    wh_path = sfx_dir / "whoosh.wav"
+    if not wh_path.exists():
+        dur = 0.55
+        t   = np.linspace(0, dur, int(sr * dur), endpoint=False)
+        # Filtered noise sweep
+        noise = np.random.randn(len(t))
+        # Rising frequency sweep 300 → 4000 Hz
+        freq  = 300 + 3700 * (t / dur) ** 2
+        phase = 2 * np.pi * np.cumsum(freq) / sr
+        tonal = np.sin(phase) * 0.25
+        # Bell-shape envelope (rises then falls)
+        env   = np.exp(-((t - dur * 0.45) / 0.18) ** 2)
+        wave  = (noise * 0.5 + tonal) * env
+        _save(wh_path, wave, peak=0.75)
+        print(f"  SFX generated: whoosh.wav")
+    sfx["whoosh"] = wh_path
+
+    # --- whoosh_short.wav: 0.22s sharp swoosh for stat reveals ---
+    ws_path = sfx_dir / "whoosh_short.wav"
+    if not ws_path.exists():
+        dur = 0.22
+        t   = np.linspace(0, dur, int(sr * dur), endpoint=False)
+        noise = np.random.randn(len(t))
+        freq  = 800 + 3000 * (t / dur)
+        phase = 2 * np.pi * np.cumsum(freq) / sr
+        tonal = np.sin(phase) * 0.35
+        env   = np.exp(-((t - dur * 0.4) / 0.07) ** 2)
+        wave  = (noise * 0.45 + tonal) * env
+        _save(ws_path, wave, peak=0.7)
+        print(f"  SFX generated: whoosh_short.wav")
+    sfx["whoosh_short"] = ws_path
+
+    # --- riser.wav: 4s rising tension build (lead-in to TWIST) ---
+    riser_path = sfx_dir / "riser.wav"
+    if not riser_path.exists():
+        dur = 4.0
+        t   = np.linspace(0, dur, int(sr * dur), endpoint=False)
+        # Rising sub + filtered noise that opens up
+        freq_low  = 110 + 250 * (t / dur) ** 1.3      # 110 → 360 Hz
+        phase_low = 2 * np.pi * np.cumsum(freq_low) / sr
+        low_tone  = np.sin(phase_low) * 0.35
+
+        noise = np.random.randn(len(t))
+        # Simulate opening filter: noise amplitude grows exponentially
+        noise_env = (np.exp(t / dur * 2.2) - 1) / (np.exp(2.2) - 1)
+        # High whine that creeps in
+        whine_freq = 600 + 1200 * (t / dur)
+        whine_phase= 2 * np.pi * np.cumsum(whine_freq) / sr
+        whine      = np.sin(whine_phase) * 0.12 * (t / dur) ** 2
+        # Master envelope: starts quiet, peaks at end
+        master_env = (t / dur) ** 1.5
+        wave = (low_tone + noise * 0.35 * noise_env + whine) * master_env
+        # Smooth fade-in for first 100ms
+        fade_in = int(sr * 0.1)
+        wave[:fade_in] *= np.linspace(0, 1, fade_in)
+        _save(riser_path, wave, peak=0.7)
+        print(f"  SFX generated: riser.wav (4s tension build)")
+    sfx["riser"] = riser_path
+
+    # --- tick.wav: 0.10s digital tick for stat overlays ---
+    tick_path = sfx_dir / "tick.wav"
+    if not tick_path.exists():
+        dur = 0.10
+        t   = np.linspace(0, dur, int(sr * dur), endpoint=False)
+        # Bright square-wave click + decay
+        click = np.sign(np.sin(2 * np.pi * 1800 * t)) * 0.4
+        body  = np.sin(2 * np.pi * 2400 * t) * 0.6
+        env   = np.exp(-t * 60)
+        wave  = (click + body) * env
+        _save(tick_path, wave, peak=0.6)
+        print(f"  SFX generated: tick.wav")
+    sfx["tick"] = tick_path
+
+    # --- glitch.wav: 0.15s digital noise burst (alt to tick) ---
+    glitch_path = sfx_dir / "glitch.wav"
+    if not glitch_path.exists():
+        dur = 0.15
+        t   = np.linspace(0, dur, int(sr * dur), endpoint=False)
+        # Bit-crushed noise with rapid amplitude modulation
+        noise = np.random.randn(len(t))
+        am    = 0.5 + 0.5 * np.sign(np.sin(2 * np.pi * 60 * t))
+        wave  = noise * am * np.exp(-t * 18)
+        _save(glitch_path, wave, peak=0.65)
+        print(f"  SFX generated: glitch.wav")
+    sfx["glitch"] = glitch_path
+
+    # --- heartbeat.wav (legacy) ---
     hb_path = sfx_dir / "heartbeat.wav"
     if not hb_path.exists():
         dur = 0.6
         t   = np.linspace(0, dur, int(sr * dur), endpoint=False)
-        # Two quick bass pulses
         pulse = np.exp(-t * 18) * np.sin(2 * np.pi * 60 * t)
         pulse2_start = int(sr * 0.28)
         wave = pulse.copy()
         wave[pulse2_start:] += np.exp(-(t[:len(t)-pulse2_start]) * 22) * np.sin(2 * np.pi * 55 * t[:len(t)-pulse2_start]) * 0.7
-        wave = wave / np.max(np.abs(wave)) * 0.85
-        stereo = np.column_stack([wave, wave])
-        wavfile.write(str(hb_path), sr, (stereo * 32767).astype(np.int16))
+        _save(hb_path, wave, peak=0.85)
         print(f"  SFX generated: heartbeat.wav")
     sfx["heartbeat"] = hb_path
 
-    # --- whoosh.wav: section transition sweep ---
-    wh_path = sfx_dir / "whoosh.wav"
-    if not wh_path.exists():
-        dur = 0.5
-        t   = np.linspace(0, dur, int(sr * dur), endpoint=False)
-        noise = np.random.randn(len(t))
-        # Frequency sweep envelope
-        sweep = np.sin(2 * np.pi * (200 + 2000 * t / dur) * t)
-        env   = np.exp(-t * 5) * (1 - np.exp(-t * 30))
-        wave  = (noise * 0.4 + sweep * 0.6) * env
-        wave  = wave / np.max(np.abs(wave)) * 0.75
-        stereo = np.column_stack([wave, wave])
-        wavfile.write(str(wh_path), sr, (stereo * 32767).astype(np.int16))
-        print(f"  SFX generated: whoosh.wav")
-    sfx["whoosh"] = wh_path
-
-    # --- impact.wav: sharp hit at TWIST reveal ---
+    # --- impact.wav (legacy) ---
     im_path = sfx_dir / "impact.wav"
     if not im_path.exists():
         dur = 0.4
@@ -449,29 +773,93 @@ def generate_sfx(sfx_dir: Path) -> dict[str, Path]:
         sub   = np.sin(2 * np.pi * 80 * t)
         env   = np.exp(-t * 25)
         wave  = (noise * 0.5 + sub * 0.5) * env
-        wave  = wave / np.max(np.abs(wave)) * 0.90
-        stereo = np.column_stack([wave, wave])
-        wavfile.write(str(im_path), sr, (stereo * 32767).astype(np.int16))
+        _save(im_path, wave, peak=0.9)
         print(f"  SFX generated: impact.wav")
     sfx["impact"] = im_path
 
     return sfx
 
 
+def build_sfx_timeline(sfx: dict[str, Path],
+                       stats: list[dict] | None,
+                       total_duration: float) -> list[tuple[float, str, float]]:
+    """
+    Build a list of (start_time, sfx_name, volume) events for the whole video.
+    Cinematic event design:
+      0.00s  → BOOM (the cinematic hook punch — sub-bass drop)
+      0.10s  → whoosh_short (whip into the hook line)
+      5.00s  → whoosh (BUILD section transition)
+      stat-  → tick or glitch 50ms before each stat overlay
+      16.0s  → riser (4s tension build to TWIST)
+      20.0s  → BOOM (THE drop — biggest moment of the video)
+      35.0s  → whoosh (OUTRO transition)
+      45.0s  → whoosh_short (closing punch into final line)
+    """
+    events: list[tuple[float, str, float]] = []
+
+    def add(t: float, name: str, vol: float = 1.0):
+        if t >= total_duration or t < 0:
+            return
+        if name in sfx:
+            events.append((t, name, vol))
+
+    # HOOK PUNCH — cinematic boom + whip
+    add(0.00, "boom",         1.00)
+    add(0.10, "whoosh_short", 0.65)
+
+    # BUILD transition
+    add(5.00, "whoosh", 0.70)
+
+    # Per-stat ticks (alternate tick/glitch for variety)
+    if stats:
+        for i, stat in enumerate(stats):
+            t = stat.get("start", 0) - 0.05
+            if t < 0.5:                    # don't double up with hook punch
+                continue
+            if 19.0 < t < 21.0:            # don't clash with twist boom
+                continue
+            sfx_name = "tick" if i % 2 == 0 else "glitch"
+            add(t, sfx_name, 0.55)
+
+    # TWIST tension build
+    twist_t = 20.0
+    if twist_t < total_duration:
+        # Riser starts 4s before twist (or as much as fits)
+        riser_start = max(twist_t - 4.0, 5.5)
+        add(riser_start, "riser", 0.60)
+        # The drop
+        add(twist_t, "boom", 1.00)
+
+    # OUTRO
+    add(35.0, "whoosh", 0.70)
+    add(45.0, "whoosh_short", 0.55)
+
+    # Sort by start time for cleaner debug output
+    events.sort(key=lambda e: e[0])
+    return events
+
+
 def mix_audio_with_sfx(voiceover_path: Path, music_path: Path | None,
-                       music_volume: float, total_duration: float) -> Path:
-    """Mix voiceover + music + SFX overlays at section transitions."""
+                       music_volume: float, total_duration: float,
+                       stats: list[dict] | None = None,
+                       sfx_volume: float = 0.85) -> Path:
+    """
+    Mix voiceover + music + cinematic SFX timeline.
+
+    Args:
+        stats:      list from extract_stats() — used to time stat-overlay ticks
+        sfx_volume: master multiplier for ALL SFX (0.0–1.5). Default 0.85.
+    """
     from moviepy import AudioFileClip, CompositeAudioClip, concatenate_audioclips
     from moviepy import afx
 
     sfx_dir = Path("audio/sfx")
     sfx     = generate_sfx(sfx_dir)
 
-    vo = AudioFileClip(str(voiceover_path))
-
+    vo     = AudioFileClip(str(voiceover_path))
     tracks = [vo]
 
-    # Add background music
+    # Background music
     if music_path and music_path.exists():
         music = AudioFileClip(str(music_path))
         if music.duration < total_duration:
@@ -481,36 +869,32 @@ def mix_audio_with_sfx(voiceover_path: Path, music_path: Path | None,
         music = music.with_effects([afx.MultiplyVolume(music_volume)])
         tracks.append(music)
 
-    # Overlay SFX at section transitions
-    # HOOK start (0s) → heartbeat
-    if "heartbeat" in sfx:
+    # Build cinematic SFX timeline and overlay each event
+    events  = build_sfx_timeline(sfx, stats, total_duration)
+    applied = 0
+    for start, name, vol in events:
         try:
-            hb = AudioFileClip(str(sfx["heartbeat"])).with_start(0.0)
-            tracks.append(hb)
-        except Exception:
-            pass
+            clip = AudioFileClip(str(sfx[name]))
+            # Trim if it would exceed the video
+            if start + clip.duration > total_duration:
+                clip = clip.subclipped(0, max(total_duration - start, 0.05))
+            clip = clip.with_effects([afx.MultiplyVolume(vol * sfx_volume)])
+            clip = clip.with_start(start)
+            tracks.append(clip)
+            applied += 1
+        except Exception as e:
+            print(f"  SFX skip ({name} @ {start:.1f}s): {e}")
 
-    # BUILD (5s), OUTRO (35s) → whoosh
-    for t in (5.0, 35.0):
-        if t < total_duration and "whoosh" in sfx:
-            try:
-                wh = AudioFileClip(str(sfx["whoosh"])).with_start(t)
-                tracks.append(wh)
-            except Exception:
-                pass
-
-    # TWIST (20s) → impact
-    if 20.0 < total_duration and "impact" in sfx:
-        try:
-            im = AudioFileClip(str(sfx["impact"])).with_start(20.0)
-            tracks.append(im)
-        except Exception:
-            pass
+    # Pretty-print the timeline so the user can see what's playing when
+    if events:
+        print("  SFX timeline:")
+        for start, name, vol in events:
+            print(f"    {start:5.2f}s  {name:<13} (vol {vol:.2f})")
 
     mixed      = CompositeAudioClip(tracks)
     mixed_path = voiceover_path.parent / (voiceover_path.stem + "_mixed.mp3")
     mixed.write_audiofile(str(mixed_path), fps=44100, logger=None)
-    print(f"  Audio mixed: voiceover + music + {len(sfx)} SFX")
+    print(f"  Audio mixed: voiceover + music + {applied}/{len(events)} SFX events")
     return mixed_path
 
 
@@ -551,6 +935,110 @@ def extract_sections(md_path: Path) -> dict[str, list[str]]:
                     sections[current].append(q)
 
     return sections
+
+
+# ── Stat extraction & big-number overlays ───────────────────────────────────
+
+# نمط لاستخراج الأرقام والإحصائيات المهمة من النص
+STAT_PATTERNS = [
+    r"\$\s?[\d,]+(?:\.\d+)?\s*(?:trillion|billion|million|thousand|k|m|b)",  # $3 trillion
+    r"\$\s?[\d,]+(?:\.\d+)?",                                                # $25,000
+    r"\d+(?:\.\d+)?\s?%",                                                    # 92%
+    r"\b\d+\s+in\s+\d+\b",                                                   # 1 in 5
+    r"\b\d{1,3}(?:,\d{3})+\b",                                              # 1,000,000
+    r"\b\d+\s*(?:trillion|billion|million|thousand|years|hours|minutes|times|days)\b",  # 50 years
+]
+
+
+def extract_stats(sections: dict[str, list[str]],
+                  total_duration: float) -> list[dict]:
+    """
+    استخرج الإحصائيات من السكريبت مع توقيت كل واحدة.
+    يرجع list of {text, start, duration, section}.
+    """
+    stats = []
+    times = dict(SECTION_TIMES)
+    times["OUTRO"] = (times["OUTRO"][0], max(total_duration, times["OUTRO"][1]))
+
+    for section_name, lines in sections.items():
+        if section_name not in times:
+            continue
+        s_start, s_end = times[section_name]
+        s_end = min(s_end, total_duration)
+        if s_start >= total_duration or not lines:
+            continue
+
+        full_text = " ".join(lines)
+        section_dur = s_end - s_start
+
+        # Find all stat matches with their position in the text
+        matches = []
+        for pattern in STAT_PATTERNS:
+            for m in re.finditer(pattern, full_text, re.IGNORECASE):
+                matches.append((m.start(), m.group().strip()))
+
+        # Deduplicate overlapping matches (keep longest)
+        matches.sort()
+        clean_matches = []
+        last_end = -1
+        for pos, text in matches:
+            if pos >= last_end:
+                clean_matches.append((pos, text))
+                last_end = pos + len(text)
+
+        if not clean_matches:
+            continue
+
+        # Distribute timing within the section
+        for pos, stat_text in clean_matches[:3]:  # max 3 per section
+            relative = pos / max(len(full_text), 1)
+            stat_start = s_start + relative * section_dur
+            stats.append({
+                "text":     stat_text.upper(),
+                "start":    stat_start,
+                "duration": min(2.5, s_end - stat_start),
+                "section":  section_name,
+            })
+
+    return stats
+
+
+def make_stat_overlays(stats: list[dict]) -> list[TextClip]:
+    """تحوّل الإحصائيات لـ TextClips كبيرة ولامعة تظهر فوق النص الكاراوكي."""
+    clips = []
+    for stat in stats:
+        if stat["duration"] <= 0.3:
+            continue
+
+        try:
+            # Big bold red stat — يتمركز في أعلى الشاشة عشان ما يخفي الكاراوكي
+            clip = TextClip(
+                text=stat["text"],
+                font_size=140,
+                color="#FFE600",          # أصفر لامع للإحصائيات
+                font=FONT_IMPACT,
+                stroke_color="#990000",   # حافة حمراء داكنة
+                stroke_width=8,
+                method="caption",
+                size=(WIDTH - 80, None),
+                text_align="center",
+            ).with_duration(stat["duration"]).with_start(stat["start"])
+
+            # موقع: ربع الشاشة العلوي
+            clip = clip.with_position(("center", int(HEIGHT * 0.18)))
+
+            # fade in/out + ضربة دخول
+            fade = min(0.25, stat["duration"] / 4)
+            clip = clip.with_effects([
+                vfx.CrossFadeIn(fade),
+                vfx.CrossFadeOut(fade),
+            ])
+
+            clips.append(clip)
+        except Exception as e:
+            print(f"  Stat overlay skipped ({stat['text']}): {e}")
+
+    return clips
 
 
 # ── 2. Karaoke-style text clips ───────────────────────────────────────────────
@@ -614,6 +1102,13 @@ def make_karaoke_clips(sections: dict[str, list[str]],
                     vfx.CrossFadeIn(fade),
                     vfx.CrossFadeOut(fade),
                 ])
+
+            # 🔥 HOOK gets quick punch-in zoom on the first phrase only
+            if name == "HOOK" and i == 0:
+                try:
+                    clip = clip.resized(lambda t: 1.0 + max(0, 0.12 - t) * 0.8)
+                except Exception:
+                    pass  # if Resize unavailable, keep static
 
             clips.append(clip)
 
