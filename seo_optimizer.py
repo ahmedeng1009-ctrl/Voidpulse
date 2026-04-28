@@ -278,6 +278,14 @@ def build_youtube_body(topic: str, hook: str, video_id_placeholder: str = "") ->
         print(f"  Localizations failed ({e}) — uploading English only")
         localizations = {}
 
+    # Arabic-speaking countries — content is English-only, block to avoid
+    # irrelevant impressions and protect channel from non-target audience
+    ARABIC_COUNTRIES = [
+        "DZ", "BH", "KM", "DJ", "EG", "IQ", "JO", "KW", "LB", "LY",
+        "MR", "MA", "OM", "PS", "QA", "SA", "SO", "SD", "SS", "SY",
+        "TN", "AE", "YE", "TD", "ER",
+    ]
+
     body = {
         "snippet": {
             "title":                meta["title"],
@@ -291,11 +299,17 @@ def build_youtube_body(topic: str, hook: str, video_id_placeholder: str = "") ->
             "privacyStatus":          "public",
             "selfDeclaredMadeForKids": False,
         },
+        "contentDetails": {
+            "regionRestriction": {
+                "blocked": ARABIC_COUNTRIES,
+            },
+        },
     }
 
     if localizations:
         body["localizations"] = localizations
 
+    print(f"  Region: blocked {len(ARABIC_COUNTRIES)} Arabic-speaking countries")
     return body
 
 

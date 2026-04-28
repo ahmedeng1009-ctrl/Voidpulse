@@ -601,8 +601,8 @@ def step_upload_youtube(video_path: Path, thumbnail_path: Path | None,
 
     media    = MediaFileUpload(str(video_path), mimetype="video/mp4",
                                resumable=True, chunksize=5*1024*1024)
-    # Include localizations part if body has translations
-    parts = "snippet,status"
+    # Include localizations + contentDetails (region restriction) if present
+    parts = "snippet,status,contentDetails"
     if "localizations" in body:
         parts += ",localizations"
     request  = youtube.videos().insert(part=parts, body=body, media_body=media)
