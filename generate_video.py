@@ -351,6 +351,47 @@ def fetch_multiple_clips(queries: list[str], cache_dir: Path,
     return clips
 
 
+# ── CTA overlay ──────────────────────────────────────────────────────────────
+
+def make_cta_overlay(total_duration: float) -> list:
+    """
+    Persistent "💬 Comment below ↓" bar that appears during the OUTRO section.
+    Drives comments — the strongest algorithm signal after watch time.
+    """
+    outro_start, outro_end = SECTION_TIMES["OUTRO"]
+    cta_start = min(outro_start, total_duration - 1.0)
+    cta_dur   = max(total_duration - cta_start, 0.5)
+
+    clips = []
+    try:
+        # Semi-transparent dark background pill
+        bg = ColorClip(size=(WIDTH, 90), color=(0, 0, 0), duration=cta_dur)
+        bg = bg.with_opacity(0.55).with_start(cta_start)
+        bg = bg.with_position(("center", HEIGHT - 130))
+        clips.append(bg)
+
+        # CTA text
+        label = TextClip(
+            text="💬  Comment below  ↓",
+            font_size=52,
+            color="#FFFFFF",
+            font=FONT_ARIAL_BD,
+            stroke_color="#000000",
+            stroke_width=1,
+            method="label",
+        ).with_duration(cta_dur).with_start(cta_start)
+        label = label.with_position(("center", HEIGHT - 125))
+
+        fade = min(0.3, cta_dur / 3)
+        label = label.with_effects([vfx.CrossFadeIn(fade)])
+        clips.append(label)
+
+    except Exception as e:
+        print(f"  CTA overlay skipped: {e}")
+
+    return clips
+
+
 # ── Visual effects helpers ────────────────────────────────────────────────────
 
 def make_vignette_overlay(duration: float):

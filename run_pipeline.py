@@ -221,6 +221,24 @@ HOOK MUST BE:
 
 ═══════════════════════════════════════════════════════════════════════
 
+💬 CTA RULES (last spoken line — drives comments = algorithm boost):
+═══════════════════════════════════════════════════════════════════════
+The OUTRO must END with one question that forces a comment.
+
+Rules:
+- ≤ 8 words, direct, requires a YES/NO or one-word answer
+- Must relate to the topic — not generic "subscribe" or "follow"
+- Controversial or personal — makes viewer feel their opinion matters
+
+✅ "Did you know this? Comment YES or NO."
+✅ "Has your doctor ever warned you about this?"
+✅ "Are they hiding this from you? Tell me."
+✅ "Drop a 🚨 if this disturbed you."
+❌ "Follow for more dark facts."
+❌ "Subscribe for more content like this."
+
+═══════════════════════════════════════════════════════════════════════
+
 SCRIPT FORMAT (follow exactly):
 
 # {TOPIC TITLE} | YouTube Short Script
@@ -258,9 +276,9 @@ SCRIPT FORMAT (follow exactly):
 **[OUTRO / CTA — 0:25–0:32]**
 > *[Stage direction]*
 
-"Closing line."
+"Closing revelation line."
 
-"**Punchy final line.**"
+"**[CTA QUESTION — ≤ 8 words, YES/NO or one-word answer]**"
 
 ---
 
@@ -477,6 +495,9 @@ def step_generate_video(script_path: Path, audio_path: Path,
     twist = gv.make_twist_flash(total_duration)
     if twist:
         layers.append(twist)
+
+    # 💬 CTA overlay — drives comments during OUTRO
+    layers.extend(gv.make_cta_overlay(total_duration))
 
     video = CompositeVideoClip(layers, size=(gv.WIDTH, gv.HEIGHT))
     video = video.with_duration(total_duration).with_audio(final_audio)
