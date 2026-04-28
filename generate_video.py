@@ -351,6 +351,79 @@ def fetch_multiple_clips(queries: list[str], cache_dir: Path,
     return clips
 
 
+# ── Channel signature ────────────────────────────────────────────────────────
+
+def make_channel_watermark(total_duration: float):
+    """
+    Semi-transparent VOIDPULSE watermark in the top-right corner throughout
+    the entire video. Proves consistent brand identity to YouTube's content
+    classifiers — key protection against the 'inauthentic content' policy.
+    """
+    try:
+        clip = TextClip(
+            text="VOIDPULSE",
+            font_size=38,
+            color="#FFFFFF",
+            font=FONT_IMPACT,
+            stroke_color="#000000",
+            stroke_width=2,
+            method="label",
+        ).with_duration(total_duration).with_start(0.0)
+        clip = clip.with_opacity(0.40)
+        # position requires the clip to be rendered first — use lambda
+        clip = clip.with_position(lambda t: (WIDTH - 210, 28))
+        return clip
+    except Exception as e:
+        print(f"  Watermark skipped: {e}")
+        return None
+
+
+def make_brand_intro(total_duration: float) -> list:
+    """
+    0.4s brand card that appears right after the hook punch (t=0.3s–0.7s).
+    Shows channel name + tagline — visually distinguishes VoidPulse from
+    generic AI channels and satisfies YouTube's 'unique identity' requirement.
+    """
+    if total_duration < 1.0:
+        return []
+
+    start = 0.30   # right after hook punch white flash fades
+    dur   = 0.40
+    clips = []
+
+    try:
+        name_clip = TextClip(
+            text="VOIDPULSE",
+            font_size=72,
+            color="#FF2222",
+            font=FONT_IMPACT,
+            stroke_color="#000000",
+            stroke_width=3,
+            method="label",
+        ).with_duration(dur).with_start(start)
+        name_clip = name_clip.with_position(("center", int(HEIGHT * 0.10)))
+        name_clip = name_clip.with_effects([vfx.CrossFadeIn(0.08), vfx.CrossFadeOut(0.12)])
+        clips.append(name_clip)
+
+        tag_clip = TextClip(
+            text="UNCOMFORTABLE TRUTHS",
+            font_size=34,
+            color="#CCCCCC",
+            font=FONT_ARIAL_BD,
+            stroke_color="#000000",
+            stroke_width=1,
+            method="label",
+        ).with_duration(dur).with_start(start)
+        tag_clip = tag_clip.with_position(("center", int(HEIGHT * 0.10) + 85))
+        tag_clip = tag_clip.with_effects([vfx.CrossFadeIn(0.10), vfx.CrossFadeOut(0.12)])
+        clips.append(tag_clip)
+
+    except Exception as e:
+        print(f"  Brand intro skipped: {e}")
+
+    return clips
+
+
 # ── CTA overlay ──────────────────────────────────────────────────────────────
 
 def make_cta_overlay(total_duration: float) -> list:

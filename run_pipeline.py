@@ -499,6 +499,12 @@ def step_generate_video(script_path: Path, audio_path: Path,
     # 💬 CTA overlay — drives comments during OUTRO
     layers.extend(gv.make_cta_overlay(total_duration))
 
+    # 🔑 Channel signature — watermark + brand intro (inauthentic content protection)
+    wm = gv.make_channel_watermark(total_duration)
+    if wm:
+        layers.append(wm)
+    layers.extend(gv.make_brand_intro(total_duration))
+
     video = CompositeVideoClip(layers, size=(gv.WIDTH, gv.HEIGHT))
     video = video.with_duration(total_duration).with_audio(final_audio)
 
