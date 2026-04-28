@@ -256,6 +256,15 @@ def build_youtube_body(topic: str, hook: str, video_id_placeholder: str = "") ->
     print(f"  Title : {meta['title']}")
     print(f"  Tags  : {len(meta['tags'])} tags")
 
+    # Append affiliate links to description
+    try:
+        from affiliate_links import build_affiliate_section
+        affiliate_section = build_affiliate_section(topic)
+        if affiliate_section:
+            meta["description"] = meta["description"].rstrip() + "\n" + affiliate_section
+            print(f"  Affiliates: added to description")
+    except Exception as e:
+        print(f"  Affiliates skipped ({e})")
 
     # Generate translations for global reach
     print("  Generating localizations (7 languages) for global reach...")
