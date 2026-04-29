@@ -101,6 +101,7 @@ jobs:
           git add metadata/
           # فقط نعمل commit لو في تغييرات فعلية
           git diff --cached --quiet || git commit -m "chore: update metadata after pipeline run [skip ci]"
+          git pull --rebase origin main
           git push
 
       # ── 8. تحديث YOUTUBE_TOKEN_JSON بالتوكن المحدث بعد الرفع ─────────────────
