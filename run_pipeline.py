@@ -32,22 +32,56 @@ def setup_logging() -> Path:
     log_dir.mkdir(exist_ok=True)
     log_path = log_dir / datetime.now().strftime("%Y-%m-%d_%H-%M.log")
 
+    # Use UTF-8 for stdout/stderr on Windows to handle special characters
+    if hasattr(sys.stdout, "reconfigure"):
+        try:
+            sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        except Exception:
+            pass
+    if hasattr(sys.stderr, "reconfigure"):
+        try:
+            sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+        except Exception:
+            pass
+
+    file_handler   = logging.FileHandler(log_path, encoding="utf-8")
+    stream_handler = logging.StreamHandler(sys.__stdout__)
+    try:
+        # Ensure stream handler also uses UTF-8
+        if hasattr(stream_handler.stream, "reconfigure"):
+            stream_handler.stream.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
     logging.basicConfig(
         level=logging.INFO,
         format="%(message)s",
-        handlers=[
-            logging.FileHandler(log_path, encoding="utf-8"),
-            logging.StreamHandler(sys.stdout),
-        ],
+        handlers=[file_handler, stream_handler],
     )
+
+    _in_logging = False   # re-entrance guard
 
     class _Tee:
         def __init__(self, stream): self._s = stream
         def write(self, msg):
-            self._s.write(msg)
-            if msg.strip():
-                logging.info(msg.rstrip())
-        def flush(self): self._s.flush()
+            nonlocal _in_logging
+            try:
+                self._s.write(msg)
+            except Exception:
+                pass
+            if msg.strip() and not _in_logging:
+                _in_logging = True
+                try:
+                    logging.info(msg.rstrip())
+                except Exception:
+                    pass
+                finally:
+                    _in_logging = False
+        def flush(self):
+            try:
+                self._s.flush()
+            except Exception:
+                pass
         def isatty(self): return False
 
     sys.stdout = _Tee(sys.__stdout__)
@@ -243,7 +277,7 @@ SCRIPT FORMAT (follow exactly):
 
 # {TOPIC TITLE} | YouTube Short Script
 **Niche:** Scary Real Statistics Visualized
-**Duration:** ~55 seconds
+**Duration:** ~30 seconds
 **Style:** Dramatic / Conspiracy-core
 
 ---
@@ -259,7 +293,7 @@ SCRIPT FORMAT (follow exactly):
 
 ---
 
-**[BUILD — 0:03–0:20]**
+**[BUILD — 0:03–0:13]**
 > *[Stage direction]*
 
 "Spoken line with **bold stat**."
@@ -268,7 +302,7 @@ SCRIPT FORMAT (follow exactly):
 
 ---
 
-**[TWIST — 0:20–0:38]**
+**[TWIST — 0:13–0:25]**
 > *[Stage direction]*
 
 "Spoken line."
@@ -277,7 +311,7 @@ SCRIPT FORMAT (follow exactly):
 
 ---
 
-**[OUTRO / CTA — 0:38–0:55]**
+**[OUTRO / CTA — 0:25–0:33]**
 > *[Stage direction]*
 
 "Closing revelation line."

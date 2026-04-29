@@ -44,9 +44,9 @@ BG_COLOR      = (5, 5, 10)
 
 SECTION_TIMES = {
     "HOOK":  (0,   3),
-    "BUILD": (3,  20),
-    "TWIST": (20, 38),
-    "OUTRO": (38, 55),
+    "BUILD": (3,  13),
+    "TWIST": (13, 25),
+    "OUTRO": (25, 33),
 }
 
 import platform as _platform
