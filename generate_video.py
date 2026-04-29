@@ -1117,7 +1117,7 @@ def extract_stats(sections: dict[str, list[str]],
     return stats
 
 
-def make_stat_overlays(stats: list[dict]) -> list[TextClip]:
+def make_stat_overlays(stats: list[dict]) -> list:
     """تحوّل الإحصائيات لـ TextClips كبيرة ولامعة تظهر فوق النص الكاراوكي."""
     clips = []
     for stat in stats:
@@ -1125,23 +1125,38 @@ def make_stat_overlays(stats: list[dict]) -> list[TextClip]:
             continue
 
         try:
-            # Big bold red stat — يتمركز في أعلى الشاشة عشان ما يخفي الكاراوكي
-            clip = TextClip(
-                text=stat["text"],
-                font_size=140,
-                color="#FFE600",          # أصفر لامع للإحصائيات
-                font=FONT_IMPACT,
-                stroke_color="#990000",   # حافة حمراء داكنة
-                stroke_width=8,
-                method="caption",
-                size=(WIDTH - 80, None),
-                text_align="center",
-            ).with_duration(stat["duration"]).with_start(stat["start"])
+            # PIL-safe renderer — stroke_width=8 would clip with stock TextClip
+            clip, clip_h = _make_text_clip_pil(
+                stat["text"],
+                140,
+                "#FFE600",
+                FONT_IMPACT,
+                "#990000",
+                8,
+                WIDTH - 80,
+                stat["duration"],
+                stat["start"],
+            )
+
+            if clip is None:
+                # fallback
+                clip = TextClip(
+                    text=stat["text"],
+                    font_size=140,
+                    color="#FFE600",
+                    font=FONT_IMPACT,
+                    stroke_color="#990000",
+                    stroke_width=8,
+                    method="caption",
+                    size=(WIDTH - 80, None),
+                    text_align="center",
+                ).with_duration(stat["duration"]).with_start(stat["start"])
+                clip_h = clip.h
 
             # موقع: ربع الشاشة العلوي
             clip = clip.with_position(("center", int(HEIGHT * 0.18)))
 
-            # fade in/out + ضربة دخول
+            # fade in/out
             fade = min(0.25, stat["duration"] / 4)
             clip = clip.with_effects([
                 vfx.CrossFadeIn(fade),
@@ -1155,10 +1170,102 @@ def make_stat_overlays(stats: list[dict]) -> list[TextClip]:
     return clips
 
 
+# ── PIL-safe text renderer (fixes MoviePy stroke-clipping bug) ────────────────
+
+def _make_text_clip_pil(text: str, font_size: int, color, font_path: str,
+                        stroke_color, stroke_width: int,
+                        max_width: int, duration: float, start: float):
+    """
+    Render text using PIL directly so the stroke never gets clipped.
+
+    MoviePy 2.x TextClip with method="caption" uses PIL's textbbox() to size
+    the image, but textbbox() under-reports height when stroke_width > 0 —
+    the stroke bleeds outside the bbox and the tops/bottoms of letters get cut.
+
+    This function measures the real bbox, adds explicit padding, draws onto a
+    transparent RGBA canvas, and returns an ImageClip.  Falls back to a plain
+    TextClip on any error.
+    """
+    try:
+        from PIL import Image, ImageDraw, ImageFont, ImageColor
+        import numpy as np
+        from moviepy import ImageClip
+
+        PAD = stroke_width * 4 + 16   # padding on every side (px)
+
+        pil_font = ImageFont.truetype(font_path, font_size)
+
+        # ── word-wrap to max_width ────────────────────────────────────────────
+        _dummy_draw = ImageDraw.Draw(Image.new("RGBA", (1, 1)))
+
+        def _measure_w(s: str) -> int:
+            bb = _dummy_draw.textbbox((0, 0), s, font=pil_font,
+                                      stroke_width=stroke_width)
+            return bb[2] - bb[0]
+
+        words        = text.split()
+        lines: list  = []
+        cur:   list  = []
+        avail_w      = max_width - PAD * 2
+
+        for word in words:
+            test = " ".join(cur + [word])
+            if _measure_w(test) <= avail_w or not cur:
+                cur.append(word)
+            else:
+                lines.append(" ".join(cur))
+                cur = [word]
+        if cur:
+            lines.append(" ".join(cur))
+
+        full_text = "\n".join(lines)
+
+        # ── measure complete bounding box (includes stroke) ───────────────────
+        bb      = _dummy_draw.textbbox((0, 0), full_text, font=pil_font,
+                                       stroke_width=stroke_width)
+        text_w  = bb[2] - bb[0]
+        text_h  = bb[3] - bb[1]
+
+        img_w = max_width
+        img_h = text_h + PAD * 2
+
+        # ── draw onto transparent canvas ──────────────────────────────────────
+        img  = Image.new("RGBA", (img_w, img_h), (0, 0, 0, 0))
+        draw = ImageDraw.Draw(img)
+
+        def _to_rgba(c):
+            if isinstance(c, str):
+                rgb = ImageColor.getrgb(c)
+                return rgb + (255,) if len(rgb) == 3 else rgb
+            t = tuple(c)
+            return t + (255,) if len(t) == 3 else t
+
+        # Center text horizontally; offset by bbox origin so no top-clipping
+        x = max(PAD, (img_w - text_w) // 2 - bb[0])
+        y = PAD - bb[1]
+
+        draw.text(
+            (x, y), full_text,
+            font=pil_font,
+            fill=_to_rgba(color),
+            stroke_width=stroke_width,
+            stroke_fill=_to_rgba(stroke_color),
+            align="center",
+        )
+
+        clip = (ImageClip(np.array(img), duration=duration)
+                .with_start(start))
+        return clip, img_h
+
+    except Exception as e:
+        print(f"  PIL text render failed ({e}) — using TextClip fallback")
+        return None, 0
+
+
 # ── 2. Karaoke-style text clips ───────────────────────────────────────────────
 
 def make_karaoke_clips(sections: dict[str, list[str]],
-                       total_duration: float) -> list[TextClip]:
+                       total_duration: float) -> list:
     PHRASE_SIZE   = 4
     section_order = ["HOOK", "BUILD", "TWIST", "OUTRO"]
     times         = dict(SECTION_TIMES)
@@ -1195,19 +1302,35 @@ def make_karaoke_clips(sections: dict[str, list[str]],
             if p_dur <= 0:
                 continue
 
-            clip = TextClip(
-                text=phrase.upper(),
-                font_size=style["font_size"],
-                color=style["color"],
-                font=style["font"],
-                stroke_color="black",
-                stroke_width=style["stroke_width"],
-                method="caption",
-                size=(WIDTH - 120, None),
-                text_align="center",
-            ).with_duration(p_dur).with_start(p_start)
+            # ── try PIL-safe renderer first ───────────────────────────────────
+            clip, clip_h = _make_text_clip_pil(
+                phrase.upper(),
+                style["font_size"],
+                style["color"],
+                style["font"],
+                "black",
+                style["stroke_width"],
+                WIDTH - 120,
+                p_dur,
+                p_start,
+            )
 
-            clip = clip.with_position(("center", HEIGHT // 2 - clip.h // 2 - 80))
+            # ── fallback: original TextClip ───────────────────────────────────
+            if clip is None:
+                clip = TextClip(
+                    text=phrase.upper(),
+                    font_size=style["font_size"],
+                    color=style["color"],
+                    font=style["font"],
+                    stroke_color="black",
+                    stroke_width=style["stroke_width"],
+                    method="caption",
+                    size=(WIDTH - 120, None),
+                    text_align="center",
+                ).with_duration(p_dur).with_start(p_start)
+                clip_h = clip.h
+
+            clip = clip.with_position(("center", HEIGHT // 2 - clip_h // 2 - 80))
 
             # Fade in/out for smooth karaoke transitions
             fade = min(0.18, p_dur / 4)
