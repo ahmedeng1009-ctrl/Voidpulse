@@ -43,10 +43,10 @@ FPS           = 30
 BG_COLOR      = (5, 5, 10)
 
 SECTION_TIMES = {
-    "HOOK":  (0,   2),
-    "BUILD": (2,  15),
-    "TWIST": (15, 25),
-    "OUTRO": (25, 32),
+    "HOOK":  (0,   3),
+    "BUILD": (3,  20),
+    "TWIST": (20, 38),
+    "OUTRO": (38, 55),
 }
 
 import platform as _platform
@@ -494,11 +494,12 @@ def make_red_atmosphere(duration: float):
 
 
 def make_twist_flash(total_duration: float):
-    """Brief red flash at the TWIST section start (t=20s)."""
-    if 15.0 >= total_duration:
+    """Brief red flash at the TWIST section start."""
+    twist_start = SECTION_TIMES["TWIST"][0]
+    if twist_start >= total_duration:
         return None
     flash = ColorClip(size=(WIDTH, HEIGHT), color=(220, 0, 0), duration=0.25)
-    return flash.with_opacity(0.45).with_start(15.0)
+    return flash.with_opacity(0.45).with_start(twist_start)
 
 
 def make_hook_punch(total_duration: float) -> list:
@@ -935,18 +936,17 @@ def build_sfx_timeline(sfx: dict[str, Path],
             sfx_name = "tick" if i % 2 == 0 else "glitch"
             add(t, sfx_name, 0.55)
 
-    # TWIST tension build
-    twist_t = 15.0
+    # TWIST tension build — at 20s for ~55s videos
+    twist_t = SECTION_TIMES["TWIST"][0]
     if twist_t < total_duration:
-        # Riser starts 3s before twist (or as much as fits)
         riser_start = max(twist_t - 3.0, 2.5)
         add(riser_start, "riser", 0.60)
-        # The drop
         add(twist_t, "boom", 1.00)
 
-    # OUTRO
-    add(25.0, "whoosh", 0.70)
-    add(30.0, "whoosh_short", 0.55)
+    # OUTRO transition
+    outro_t = SECTION_TIMES["OUTRO"][0]
+    add(outro_t,        "whoosh",       0.70)
+    add(outro_t + 5.0,  "whoosh_short", 0.55)
 
     # Sort by start time for cleaner debug output
     events.sort(key=lambda e: e[0])

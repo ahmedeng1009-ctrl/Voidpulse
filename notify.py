@@ -25,6 +25,35 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
+def auto_discover_chat_id(token: str) -> str:
+    """
+    يجيب الـ chat_id تلقائياً من أول رسالة وصلت للبوت.
+    يشتغل فقط إذا المستخدم أرسل رسالة للبوت مرة واحدة على الأقل.
+    """
+    try:
+        url = f"https://api.telegram.org/bot{token}/getUpdates"
+        req = urllib.request.Request(url, method="GET")
+        with urllib.request.urlopen(req, timeout=8) as resp:
+            data = json.loads(resp.read())
+        results = data.get("result", [])
+        if results:
+            chat_id = str(results[-1]["message"]["chat"]["id"])
+            # احفظه في .env تلقائياً
+            env_path = Path(".env")
+            if env_path.exists():
+                content = env_path.read_text(encoding="utf-8")
+                if "TELEGRAM_CHAT_ID=" in content:
+                    import re
+                    content = re.sub(r"TELEGRAM_CHAT_ID=.*", f"TELEGRAM_CHAT_ID={chat_id}", content)
+                    env_path.write_text(content, encoding="utf-8")
+                    os.environ["TELEGRAM_CHAT_ID"] = chat_id
+                    print(f"  [notify] Auto-discovered TELEGRAM_CHAT_ID={chat_id} and saved to .env")
+            return chat_id
+    except Exception:
+        pass
+    return ""
+
+
 def notify(message: str) -> bool:
     """
     أرسل رسالة Telegram. يرجع True إذا نجح، False إذا فشل بصمت.
@@ -33,7 +62,14 @@ def notify(message: str) -> bool:
     token   = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
     chat_id = os.getenv("TELEGRAM_CHAT_ID",   "").strip()
 
-    if not token or not chat_id:
+    if not token:
+        return False
+
+    # اكتشف الـ chat_id تلقائياً إذا كان فارغاً
+    if not chat_id:
+        chat_id = auto_discover_chat_id(token)
+
+    if not chat_id:
         return False
 
     url  = f"https://api.telegram.org/bot{token}/sendMessage"

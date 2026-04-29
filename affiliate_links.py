@@ -170,7 +170,8 @@ def build_affiliate_section(topic: str) -> str:
         lines.append(f"→ {url}")
         lines.append("")
 
-    lines.append("(As an Amazon Associate, I earn from qualifying purchases.)")
+    if AMAZON_TAG:
+        lines.append("(As an Amazon Associate, I earn from qualifying purchases.)")
     return "\n".join(lines)
 
 

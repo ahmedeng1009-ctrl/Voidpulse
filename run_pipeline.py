@@ -243,7 +243,7 @@ SCRIPT FORMAT (follow exactly):
 
 # {TOPIC TITLE} | YouTube Short Script
 **Niche:** Scary Real Statistics Visualized
-**Duration:** ~32 seconds
+**Duration:** ~55 seconds
 **Style:** Dramatic / Conspiracy-core
 
 ---
@@ -252,28 +252,32 @@ SCRIPT FORMAT (follow exactly):
 
 ---
 
-**[HOOK — 0:00–0:02]**
+**[HOOK — 0:00–0:03]**
 > *[Stage direction]*
 
 "Spoken line — MUST follow the hook rules above. ≤ 8 words."
 
 ---
 
-**[BUILD — 0:02–0:15]**
+**[BUILD — 0:03–0:20]**
 > *[Stage direction]*
+
+"Spoken line with **bold stat**."
 
 "Spoken line with **bold stat**."
 
 ---
 
-**[TWIST — 0:15–0:25]**
+**[TWIST — 0:20–0:38]**
 > *[Stage direction]*
+
+"Spoken line."
 
 "Spoken line."
 
 ---
 
-**[OUTRO / CTA — 0:25–0:32]**
+**[OUTRO / CTA — 0:38–0:55]**
 > *[Stage direction]*
 
 "Closing revelation line."
