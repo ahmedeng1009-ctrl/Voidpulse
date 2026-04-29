@@ -63,14 +63,19 @@ jobs:
               f.write(f"PEXELS_API_KEY={os.environ['PEXELS_API_KEY']}\n")
               f.write(f"TELEGRAM_BOT_TOKEN={os.environ.get('TELEGRAM_BOT_TOKEN','')}\n")
               f.write(f"TELEGRAM_CHAT_ID={os.environ.get('TELEGRAM_CHAT_ID','')}\n")
-          with open('token.json', 'w') as f:
-              f.write(os.environ['YOUTUBE_TOKEN_JSON'])
-          with open('client_secret.json', 'w') as f:
-              f.write(os.environ['YOUTUBE_CLIENT_SECRET_JSON'])
+          # strip BOM if present (PowerShell on Windows adds UTF-8 BOM)
+          def strip_bom(s):
+              return s.lstrip('﻿')
+          token_raw = strip_bom(os.environ['YOUTUBE_TOKEN_JSON'])
+          secret_raw = strip_bom(os.environ['YOUTUBE_CLIENT_SECRET_JSON'])
+          with open('token.json', 'w', encoding='utf-8') as f:
+              f.write(token_raw)
+          with open('client_secret.json', 'w', encoding='utf-8') as f:
+              f.write(secret_raw)
 
           # تأكد إن token.json فيه refresh_token (مو مجرد access token)
           import json
-          token_data = json.loads(os.environ['YOUTUBE_TOKEN_JSON'])
+          token_data = json.loads(token_raw)
           if not token_data.get('refresh_token'):
               print("ERROR: YOUTUBE_TOKEN_JSON has no refresh_token — re-authorize locally then update the secret!", flush=True)
               sys.exit(1)
