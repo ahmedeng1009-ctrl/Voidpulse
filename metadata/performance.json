@@ -1,0 +1,96 @@
+{
+  "fetched_at": "2026-04-27T21:20:06",
+  "videos": [
+    {
+      "id": "o4AfaenQPPU",
+      "topic": "How fast fashion is poisoning the planet",
+      "hook": "YOU WORE IT ONCE.",
+      "views": 49,
+      "likes": 1,
+      "comments": 0,
+      "days_old": 3.2,
+      "views_per_day": 15.5,
+      "engagement_rate": 2.04,
+      "url": "https://youtu.be/o4AfaenQPPU",
+      "uploaded_at": "2026-04-24T17:31:20"
+    },
+    {
+      "id": "nr5IvS7M-uc",
+      "topic": "The hidden cost of your cheap Amazon purchase",
+      "hook": "Buy Now.",
+      "views": 15,
+      "likes": 1,
+      "comments": 0,
+      "days_old": 2.9,
+      "views_per_day": 5.2,
+      "engagement_rate": 6.67,
+      "url": "https://youtu.be/nr5IvS7M-uc",
+      "uploaded_at": "2026-04-24T23:40:51"
+    },
+    {
+      "id": "M8rm1Qx_DQQ",
+      "topic": "The secret algorithm that controls what you think",
+      "hook": "You haven't had an original thought today. It gave you all of them.",
+      "views": 10,
+      "likes": 1,
+      "comments": 0,
+      "days_old": 2.9,
+      "views_per_day": 3.5,
+      "engagement_rate": 10.0,
+      "url": "https://youtu.be/M8rm1Qx_DQQ",
+      "uploaded_at": "2026-04-24T23:54:34"
+    },
+    {
+      "id": "K0CWEAXN2s0",
+      "topic": "The dark history of how social media hijacks your brain",
+      "hook": "What if the most addictive drug ever created… fits in your pocket?",
+      "views": 6,
+      "likes": 2,
+      "comments": 0,
+      "days_old": 2.2,
+      "views_per_day": 2.7,
+      "engagement_rate": 33.33,
+      "url": "https://youtu.be/K0CWEAXN2s0",
+      "uploaded_at": "2026-04-25T16:11:00"
+    },
+    {
+      "id": "3aQHymSOXfs",
+      "topic": "How the housing market was rigged against you from the start",
+      "hook": "You were never supposed to own a home. You were supposed to rent one forever.",
+      "views": 6,
+      "likes": 1,
+      "comments": 0,
+      "days_old": 2.2,
+      "views_per_day": 2.7,
+      "engagement_rate": 16.67,
+      "url": "https://youtu.be/3aQHymSOXfs",
+      "uploaded_at": "2026-04-25T16:47:17"
+    },
+    {
+      "id": "EOZ4LHqZux0",
+      "topic": "How your phone is making you dumber every day",
+      "hook": "Your phone isn't just distracting you. It is rewiring your brain.",
+      "views": 23,
+      "likes": 1,
+      "comments": 0,
+      "days_old": 2.2,
+      "views_per_day": 10.6,
+      "engagement_rate": 4.35,
+      "url": "https://youtu.be/EOZ4LHqZux0",
+      "uploaded_at": "2026-04-25T17:01:27"
+    },
+    {
+      "id": "-5Iqzv60Vsw",
+      "topic": "How ultra-processed food is systematically destroying your gut before you turn forty.",
+      "hook": "YOUR GUT IS ALREADY FAILING.",
+      "views": 0,
+      "likes": 0,
+      "comments": 0,
+      "days_old": 1.0,
+      "views_per_day": 0.0,
+      "engagement_rate": 0.0,
+      "url": "https://youtu.be/-5Iqzv60Vsw",
+      "uploaded_at": "2026-04-27T21:18:13"
+    }
+  ]
+}

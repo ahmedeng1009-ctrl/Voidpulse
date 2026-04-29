@@ -9,11 +9,15 @@ jobs:
   upload:
     runs-on: ubuntu-latest
     timeout-minutes: 90
+    permissions:
+      contents: write        # لازم لـ git push بعد التشغيل
 
     steps:
       # ── 1. تحميل الكود ────────────────────────────────────────────────────────
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       # ── 2. Python ─────────────────────────────────────────────────────────────
       - name: Set up Python 3.11
@@ -48,7 +52,11 @@ jobs:
           YOUTUBE_CLIENT_SECRET_JSON:   ${{ secrets.YOUTUBE_CLIENT_SECRET_JSON }}
         run: |
           python - <<'PYEOF'
-          import os
+          import os, sys
+          for key in ['ANTHROPIC_API_KEY', 'ELEVENLABS_API_KEY', 'PEXELS_API_KEY', 'YOUTUBE_TOKEN_JSON', 'YOUTUBE_CLIENT_SECRET_JSON']:
+              if not os.environ.get(key):
+                  print(f"ERROR: Secret '{key}' is missing or empty!", flush=True)
+                  sys.exit(1)
           with open('.env', 'w') as f:
               f.write(f"ANTHROPIC_API_KEY={os.environ['ANTHROPIC_API_KEY']}\n")
               f.write(f"ELEVENLABS_API_KEY={os.environ['ELEVENLABS_API_KEY']}\n")
@@ -59,14 +67,50 @@ jobs:
               f.write(os.environ['YOUTUBE_TOKEN_JSON'])
           with open('client_secret.json', 'w') as f:
               f.write(os.environ['YOUTUBE_CLIENT_SECRET_JSON'])
-          print("Secrets restored OK")
+
+          # تأكد إن token.json فيه refresh_token (مو مجرد access token)
+          import json
+          token_data = json.loads(os.environ['YOUTUBE_TOKEN_JSON'])
+          if not token_data.get('refresh_token'):
+              print("ERROR: YOUTUBE_TOKEN_JSON has no refresh_token — re-authorize locally then update the secret!", flush=True)
+              sys.exit(1)
+          # تأكد إن السكوبات صحيحة
+          scopes = token_data.get('scopes', [])
+          required = 'https://www.googleapis.com/auth/youtube.force-ssl'
+          if required not in scopes:
+              print(f"WARNING: token scopes={scopes} — missing youtube.force-ssl. Re-authorize locally!", flush=True)
+              # لا نوقف — نحاول نرفع، بس بدون thumbnail
+          print("Secrets restored OK", flush=True)
           PYEOF
 
       # ── 6. Run pipeline ───────────────────────────────────────────────────────
       - name: Run VoidPulse pipeline
         run: python run_pipeline.py --smart
 
-      # ── 7. حفظ الـ logs كـ artifact ──────────────────────────────────────────
+      # ── 7. حفظ الـ metadata في الريبو لتجنب تكرار المواضيع ──────────────────
+      - name: Commit updated metadata
+        if: success()
+        run: |
+          git config user.name  "VoidPulse Bot"
+          git config user.email "voidpulse-bot@users.noreply.github.com"
+          git add metadata/
+          # فقط نعمل commit لو في تغييرات فعلية
+          git diff --cached --quiet || git commit -m "chore: update metadata after pipeline run [skip ci]"
+          git push
+
+      # ── 8. تحديث YOUTUBE_TOKEN_JSON بالتوكن المحدث بعد الرفع ─────────────────
+      - name: Refresh YOUTUBE_TOKEN_JSON secret
+        if: success() && env.GH_PAT != ''
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          if [ -f token.json ]; then
+            gh secret set YOUTUBE_TOKEN_JSON < token.json --repo "$GH_REPO"
+            echo "YOUTUBE_TOKEN_JSON secret updated successfully."
+          fi
+
+      # ── 9. حفظ الـ logs كـ artifact ──────────────────────────────────────────
       - name: Upload logs
         if: always()
         uses: actions/upload-artifact@v4

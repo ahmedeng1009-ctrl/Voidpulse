@@ -29,7 +29,10 @@ load_dotenv()
 
 CLIENT_SECRET_FILE = "client_secret.json"
 TOKEN_FILE         = "token.json"
-SCOPES             = ["https://www.googleapis.com/auth/youtube.upload"]
+SCOPES             = [
+    "https://www.googleapis.com/auth/youtube.upload",
+    "https://www.googleapis.com/auth/youtube.force-ssl",
+]
 
 # ── Auth ──────────────────────────────────────────────────────────────────────
 

@@ -1,0 +1,28 @@
+{
+  "cached_at": "2026-04-27T21:20:22",
+  "patterns_winning": [
+    "Short, punchy titles under 10 words with a clear cause-and-effect frame ('How X is doing Y to you')",
+    "Hooks use second-person 'you' to make the threat feel immediate and personal",
+    "Winning hooks contrast a casual action with a catastrophic hidden consequence ('YOU WORE IT ONCE' vs planetary destruction)",
+    "Topics target everyday behaviors the viewer already does — wearing clothes, using a phone — making the revelation unavoidable",
+    "Language stays visceral and active: 'poisoning,' 'rewiring' — present tense damage happening right now"
+  ],
+  "patterns_losing": [
+    "Overly long, clinical titles lose algorithmic punch and feel like essays, not revelations",
+    "Hooks that state conclusions outright ('YOUR GUT IS ALREADY FAILING') remove suspense and kill click motivation",
+    "Topics about systemic issues (housing market, gut health) feel distant or already-known, reducing perceived novelty",
+    "High engagement but low views suggests niche resonance without broad discovery — topic lacked mass-appeal entry point",
+    "Zero-view content likely buried by algorithm due to low watch-time signals, suggesting hook failed to retain past the first second"
+  ],
+  "topics": [
+    "How your drinking water is quietly loading your blood with forever chemicals right now.",
+    "How your mattress is poisoning eight hours of your life every single night.",
+    "How streaming algorithms are systematically eroding your ability to make decisions.",
+    "How the air inside your home is statistically more toxic than the air outside.",
+    "How your credit score was designed to keep you financially trapped forever."
+  ],
+  "consumed": [
+    "How your drinking water is quietly loading your blood with forever chemicals right now.",
+    "How your mattress is poisoning eight hours of your life every single night."
+  ]
+}
