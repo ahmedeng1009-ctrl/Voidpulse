@@ -551,12 +551,10 @@ def step_upload_youtube(video_path: Path, thumbnail_path: Path | None,
     from googleapiclient.discovery import build
     from googleapiclient.http import MediaFileUpload
 
-    # youtube.upload alone is NOT enough for thumbnails.set — we need force-ssl
-    # which grants both video upload + thumbnail set + read access
+    # Thumbnails require channel verification in YouTube Studio (not a scope issue).
+    # Using only youtube.upload — adding extra scopes causes invalid_scope on token refresh.
     SCOPES = [
         "https://www.googleapis.com/auth/youtube.upload",
-        "https://www.googleapis.com/auth/youtube.force-ssl",
-        "https://www.googleapis.com/auth/youtube.readonly",
     ]
     TOKEN_FILE  = "token.json"
     SECRET_FILE = "client_secret.json"
