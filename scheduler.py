@@ -32,7 +32,7 @@ def install_task(run_time: str = "09:00") -> bool:
     cmd = [
         "schtasks", "/create",
         "/tn",  TASK_NAME,
-        "/tr",  f'"{PYTHON_EXE}" "{PIPELINE}"',
+        "/tr",  f'"{PYTHON_EXE}" "{PIPELINE}" --smart',
         "/sc",  "daily",
         "/st",  run_time,
         "/sd",  datetime.now().strftime("%m/%d/%Y"),
@@ -49,11 +49,11 @@ def install_task(run_time: str = "09:00") -> bool:
     try:
         result = subprocess.run(cmd, capture_output=True, text=True)
         if result.returncode == 0:
-            print(f"  ✓ Task installed successfully!")
+            print(f"  [OK] Task installed successfully!")
             print(f"  Run 'python scheduler.py status' to verify.")
             return True
         else:
-            print(f"  ✗ Failed: {result.stderr.strip()}")
+            print(f"  [FAIL] {result.stderr.strip()}")
             print("\n  Note: Run this command as Administrator for SYSTEM account tasks.")
             print("  Alternative: use --ru '' (your current user account) instead.")
 
@@ -61,7 +61,7 @@ def install_task(run_time: str = "09:00") -> bool:
             cmd_user = [
                 "schtasks", "/create",
                 "/tn",  TASK_NAME,
-                "/tr",  f'"{PYTHON_EXE}" "{PIPELINE}"',
+                "/tr",  f'"{PYTHON_EXE}" "{PIPELINE}" --smart',
                 "/sc",  "daily",
                 "/st",  run_time,
                 "/sd",  datetime.now().strftime("%m/%d/%Y"),
@@ -70,14 +70,14 @@ def install_task(run_time: str = "09:00") -> bool:
             print("\n  Retrying with current user account...")
             result2 = subprocess.run(cmd_user, capture_output=True, text=True)
             if result2.returncode == 0:
-                print(f"  ✓ Task installed (current user)!")
+                print(f"  [OK] Task installed (current user)!")
                 return True
             else:
-                print(f"  ✗ Also failed: {result2.stderr.strip()}")
+                print(f"  [FAIL] {result2.stderr.strip()}")
                 return False
 
     except FileNotFoundError:
-        print("  ✗ schtasks not found — are you on Windows?")
+        print("  [FAIL] schtasks not found — are you on Windows?")
         return False
 
 
@@ -87,13 +87,13 @@ def uninstall_task() -> bool:
     try:
         result = subprocess.run(cmd, capture_output=True, text=True)
         if result.returncode == 0:
-            print("  ✓ Task removed.")
+            print("  [OK] Task removed.")
             return True
         else:
-            print(f"  ✗ {result.stderr.strip()}")
+            print(f"  [FAIL] {result.stderr.strip()}")
             return False
     except FileNotFoundError:
-        print("  ✗ schtasks not found.")
+        print("  [FAIL] schtasks not found.")
         return False
 
 
@@ -162,15 +162,15 @@ def main():
     sub = parser.add_subparsers(dest="command")
 
     p_install = sub.add_parser("install",   help="Install Windows daily task")
-    p_install.add_argument("--time", default="21:00",
-        help="Run time HH:MM Iraq time (default 21:00 = 6 PM UK = 1 PM US Eastern — peak English audience)")
+    p_install.add_argument("--time", default="02:00",
+        help="Run time HH:MM Iraq time (default 02:00 = 23:00 UK = 18:00 US Eastern — peak Shorts audience)")
 
     sub.add_parser("uninstall", help="Remove Windows daily task")
     sub.add_parser("status",    help="Show task status")
 
     p_loop = sub.add_parser("run-loop", help="Python loop mode (keep terminal open)")
-    p_loop.add_argument("--time", default="21:00",
-        help="Run time HH:MM Iraq time (default 21:00 = 6 PM UK = 1 PM US Eastern)")
+    p_loop.add_argument("--time", default="02:00",
+        help="Run time HH:MM Iraq time (default 02:00 = 23:00 UK = 18:00 US Eastern — peak Shorts audience)")
 
     sub.add_parser("run-now", help="Run pipeline immediately")
 

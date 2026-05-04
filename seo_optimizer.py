@@ -129,14 +129,17 @@ def suggest_post_time(log_path: Path = Path("metadata/uploaded_videos.json")) ->
     Targets English-speaking audiences (US/UK) — critical for Iraq-based uploaders.
     Returns a human-readable recommendation.
     """
-    # Iraq is UTC+3. Target windows for English audiences:
-    #   21:00 Iraq = 18:00 UK = 13:00 US-Eastern  ← best balance
-    #   23:00 Iraq = 20:00 UK = 15:00 US-Eastern  ← UK prime time
-    #   02:00 Iraq = 23:00 UK = 18:00 US-Eastern  ← US prime time (late night)
+    # Iraq is UTC+3. YouTube Shorts peak viewing for US+UK+India:
+    #   02:00 Iraq = 23:00 UK = 18:00 US-Eastern = 04:30 IST  ← US prime time ✅ BEST
+    #   23:00 Iraq = 20:00 UK = 15:00 US-Eastern              ← UK evening ✅ GOOD
+    #   21:00 Iraq = 18:00 UK = 13:00 US-Eastern              ← US lunch, weak
+    # Shorts algorithm rewards consistency — same time every single day matters more
+    # than picking the "perfect" hour. Miss one day = algorithmic penalty.
     ENGLISH_AUDIENCE_NOTE = (
-        "  [Iraq uploader tip] Upload at 21:00–23:00 Iraq time to reach\n"
-        "  English-speaking audiences: 18:00–20:00 UK / 13:00–15:00 US Eastern.\n"
-        "  Best days: Tuesday, Wednesday, Thursday."
+        "  [Iraq uploader tip] Upload at 02:00 Iraq time DAILY to reach\n"
+        "  US (18:00 Eastern) + UK (23:00) — the highest-CPM Shorts audience.\n"
+        "  Best days: Tuesday, Wednesday, Thursday (avoid Sat/Sun — lowest reach).\n"
+        "  CONSISTENCY beats timing — post every day at the same hour."
     )
 
     if not log_path.exists():

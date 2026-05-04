@@ -686,7 +686,7 @@ def get_music_path(duration: float) -> Path | None:
     gen_path = music_dir / "ambient_drone.wav"
     if gen_path.exists():
         gen_path.unlink()
-    generate_ambient_music(max(duration + 5, 65), gen_path)
+    generate_ambient_music(max(duration + 5, 40), gen_path)
     return gen_path if gen_path.exists() else None
 
 
@@ -931,22 +931,23 @@ def build_sfx_timeline(sfx: dict[str, Path],
             t = stat.get("start", 0) - 0.05
             if t < 0.5:                    # don't double up with hook punch
                 continue
-            if 14.0 < t < 16.0:            # don't clash with twist boom
+            twist_zone = min(SECTION_TIMES["TWIST"][0], total_duration * 0.40)
+            if (twist_zone - 2.0) < t < (twist_zone + 2.0):  # don't clash with twist boom
                 continue
             sfx_name = "tick" if i % 2 == 0 else "glitch"
             add(t, sfx_name, 0.55)
 
-    # TWIST tension build — at 20s for ~55s videos
-    twist_t = SECTION_TIMES["TWIST"][0]
+    # TWIST tension build — scale to actual video length
+    twist_t = min(SECTION_TIMES["TWIST"][0], total_duration * 0.40)
     if twist_t < total_duration:
         riser_start = max(twist_t - 3.0, 2.5)
         add(riser_start, "riser", 0.60)
         add(twist_t, "boom", 1.00)
 
-    # OUTRO transition
-    outro_t = SECTION_TIMES["OUTRO"][0]
-    add(outro_t,        "whoosh",       0.70)
-    add(outro_t + 5.0,  "whoosh_short", 0.55)
+    # OUTRO transition — scale to actual video length
+    outro_t = min(SECTION_TIMES["OUTRO"][0], total_duration * 0.75)
+    add(outro_t, "whoosh", 0.70)
+    add(min(outro_t + 3.0, total_duration - 1.0), "whoosh_short", 0.55)
 
     # Sort by start time for cleaner debug output
     events.sort(key=lambda e: e[0])

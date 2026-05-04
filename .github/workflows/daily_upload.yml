@@ -2,8 +2,20 @@ name: VoidPulse Daily Upload
 
 on:
   schedule:
-    - cron: '0 18 * * *'   # 6 PM UTC = 9 PM Iraq (UTC+3)
-  workflow_dispatch:         # تشغيل يدوي من GitHub عند الحاجة
+    # 23:00 UTC = 02:00 Iraq (UTC+3) = 18:00 US Eastern = 23:00 UK — peak Shorts audience
+    # Mon-Fri only (weekends get 30% less algorithmic reach on Shorts)
+    - cron: '0 23 * * 1,2,3,4,5'
+  workflow_dispatch:
+    inputs:
+      topic:
+        description: 'Custom topic (leave empty = smart auto-select)'
+        required: false
+        default: ''
+      skip_upload:
+        description: 'Skip YouTube upload — video file only'
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   upload:
@@ -79,18 +91,46 @@ jobs:
           if not token_data.get('refresh_token'):
               print("ERROR: YOUTUBE_TOKEN_JSON has no refresh_token — re-authorize locally then update the secret!", flush=True)
               sys.exit(1)
-          # تأكد إن السكوبات صحيحة
+          # تأكد إن السكوبات تحتوي youtube.upload على الأقل
           scopes = token_data.get('scopes', [])
-          required = 'https://www.googleapis.com/auth/youtube.force-ssl'
-          if required not in scopes:
-              print(f"WARNING: token scopes={scopes} — missing youtube.force-ssl. Re-authorize locally!", flush=True)
-              # لا نوقف — نحاول نرفع، بس بدون thumbnail
+          required = 'https://www.googleapis.com/auth/youtube.upload'
+          if not any('youtube' in s for s in scopes):
+              print(f"WARNING: token scopes={scopes} — may be missing youtube scope. Re-authorize locally!", flush=True)
           print("Secrets restored OK", flush=True)
+          PYEOF
+
+      # ── 5b. Patch font paths for Linux (Impact → Liberation Sans Bold) ────────
+      - name: Patch font paths for Linux
+        run: |
+          python - << 'PYEOF'
+          import pathlib
+          gv = pathlib.Path("generate_video.py").read_text(encoding="utf-8")
+          gv = gv.replace(
+              'FONT_IMPACT   = "C:/Windows/Fonts/impact.ttf"',
+              'FONT_IMPACT   = "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf"'
+          )
+          gv = gv.replace(
+              'FONT_ARIAL_BD = "C:/Windows/Fonts/arialbd.ttf"',
+              'FONT_ARIAL_BD = "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf"'
+          )
+          pathlib.Path("generate_video.py").write_text(gv, encoding="utf-8")
+          print("Font paths patched for Linux.")
           PYEOF
 
       # ── 6. Run pipeline ───────────────────────────────────────────────────────
       - name: Run VoidPulse pipeline
-        run: python run_pipeline.py --smart
+        env:
+          PYTHONIOENCODING: utf-8
+          PYTHONUNBUFFERED: "1"
+        run: |
+          ARGS="--smart"
+          if [ -n "${{ github.event.inputs.topic }}" ]; then
+            ARGS="$ARGS --topic \"${{ github.event.inputs.topic }}\""
+          fi
+          if [ "${{ github.event.inputs.skip_upload }}" = "true" ]; then
+            ARGS="$ARGS --skip-upload"
+          fi
+          eval python run_pipeline.py $ARGS
 
       # ── 7. حفظ الـ metadata في الريبو لتجنب تكرار المواضيع ──────────────────
       - name: Commit updated metadata
@@ -116,11 +156,14 @@ jobs:
             echo "YOUTUBE_TOKEN_JSON secret updated successfully."
           fi
 
-      # ── 9. حفظ الـ logs كـ artifact ──────────────────────────────────────────
-      - name: Upload logs
+      # ── 9. حفظ الـ video + logs كـ artifact (احتياطي لو الرفع فشل) ──────────
+      - name: Upload video + logs
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: voidpulse-log-${{ github.run_number }}
-          path: logs/
-          retention-days: 30
+          name: voidpulse-run-${{ github.run_number }}
+          path: |
+            logs/
+            video/exports/*.mp4
+            thumbnails/exported/*.jpg
+          retention-days: 7

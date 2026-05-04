@@ -90,24 +90,15 @@ def setup_logging() -> Path:
 
 # ── Topics pool — rotated automatically ──────────────────────────────────────
 
-TOPICS = [
-    # ── Original 15 ──────────────────────────────────────────────────────────
-    "The dark history of how social media hijacks your brain",
-    "How much money billionaires make while you sleep",
-    "The terrifying scale of ocean plastic pollution",
+# ── Topic tiers ───────────────────────────────────────────────────────────────
+# TIER 1 = personal / body / daily-life — highest algorithmic pull on Shorts
+#   "This is happening to YOUR body RIGHT NOW" = instant fear + personal stakes
+# TIER 2 = systemic / societal — wider but less personal; used as backup only
+# Rule: pick from TIER_1 first, fall back to TIER_2 if TIER_1 is exhausted.
+
+TOPICS_TIER1 = [
+    # ── Your body ─────────────────────────────────────────────────────────────
     "How much plastic is inside your body right now",
-    "The real reason you can never afford a house",
-    "The secret algorithm that controls what you think",
-    "How surveillance capitalism sells your soul",
-    "The dark truth about sleep deprivation",
-    "How food companies engineer addiction into every bite",
-    "The silent epidemic of loneliness destroying society",
-    "How fast fashion is poisoning the planet",
-    "The hidden cost of your cheap Amazon purchase",
-    "How your phone is making you dumber every day",
-    "The dark reality of factory farming",
-    "How governments use fear to control populations",
-    # ── Body & health ─────────────────────────────────────────────────────────
     "How your deodorant is silently poisoning your lymph nodes every day",
     "How your sunscreen is loading your bloodstream with toxic chemicals right now",
     "How your plastic water bottle is leaching hormones into every sip",
@@ -115,31 +106,62 @@ TOPICS = [
     "How your toothpaste is quietly destroying your gut microbiome",
     "How your morning coffee is slowly wrecking your cortisol levels forever",
     "How your shampoo strips the natural defenses your scalp needs to survive",
-    # ── Food & corporations ───────────────────────────────────────────────────
+    "How your phone screen is damaging your eyes faster than you think",
+    "How your headphones are permanently destroying your hearing right now",
+    "How the air inside your home is more toxic than the air outside",
+    "How your credit card is wiring your brain to overspend without feeling it",
+    "How your office chair is slowly compressing your spine into permanent damage",
+    "How the blue light from your screen is aging your skin while you scroll",
+    "How your tap water is quietly raising your cancer risk every morning",
+    "How your favorite chewing gum is releasing microplastics into your bloodstream",
+    # ── Your food ─────────────────────────────────────────────────────────────
+    "The dark truth about sleep deprivation",
+    "How food companies engineer addiction into every bite",
     "How sugar companies paid scientists to blame fat for the heart disease epidemic",
     "How supermarkets are scientifically designed to override your willpower",
     "How your child's school lunch was designed by junk food corporations",
     "How sports drinks are engineered to keep you dehydrated and buying more",
     "How the snack food industry deliberately engineers portion blindness into you",
-    # ── Money & debt ──────────────────────────────────────────────────────────
-    "How central banks legally print money that silently steals your savings",
-    "How your pension fund is quietly betting against your retirement",
-    "How grocery loyalty cards sell your health data to insurance companies",
-    "How the diamond industry invented a tradition to sell you worthless rocks",
-    "How your electric bill hides fees corporations legally steal from you every month",
-    "How pharmaceutical companies create diseases to sell you the cure",
-    # ── Tech & attention ──────────────────────────────────────────────────────
+    "How artificial sweeteners are making you crave more sugar than ever",
+    "How your breakfast cereal was designed by addiction scientists not nutritionists",
+    "How your cooking oil is silently oxidizing inside your arteries right now",
+    # ── Your mind & behavior ──────────────────────────────────────────────────
+    "The dark history of how social media hijacks your brain",
+    "The secret algorithm that controls what you think",
+    "How your phone is making you dumber every day",
     "How your streaming service is engineered to destroy your sleep cycle",
     "How your gym membership is designed so you never actually go",
     "How news algorithms are built to keep you anxious and coming back",
+    "How your brain is being rewired by infinite scroll without your consent",
+    "How your notification sounds were engineered to be impossible to ignore",
+    "How every app on your phone was designed by a team of psychologists against you",
+    # ── Your environment ──────────────────────────────────────────────────────
+    "How fast fashion is poisoning the planet",
     "How your car's air freshener is filling your lungs with carcinogens",
-    # ── Power & society ───────────────────────────────────────────────────────
+    "How the receipt paper in your hands is absorbing into your bloodstream right now",
+    "How your shower water is coating your lungs with chlorine every morning",
+    "How the dust in your bedroom contains more toxic chemicals than a factory floor",
+    "How your new furniture is off-gassing chemicals into your brain for years",
+]
+
+TOPICS_TIER2 = [
+    # ── Systemic / societal — use as backup only ──────────────────────────────
+    "How surveillance capitalism sells your soul",
+    "How the hidden cost of your cheap Amazon purchase destroys communities",
+    "How governments use fear to control populations",
+    "How the silent epidemic of loneliness is destroying society",
+    "How the dark reality of factory farming affects everything you eat",
+    "How grocery loyalty cards sell your health data to insurance companies",
+    "How the diamond industry invented a tradition to sell you worthless rocks",
+    "How pharmaceutical companies create diseases to sell you the cure",
     "How social credit systems are already silently operating in your country",
     "How cosmetic companies sell you solutions to problems they manufactured",
     "How the opioid crisis was deliberately engineered by three pharmaceutical families",
-    "How your landlord legally traps you in a lifetime of debt by design",
     "How the education system was redesigned to produce workers not thinkers",
 ]
+
+# Flat pool used by legacy code paths — TIER1 always first
+TOPICS = TOPICS_TIER1 + TOPICS_TIER2
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -200,17 +222,26 @@ def pick_topic(use_trends: bool = False, use_smart: bool = False) -> str:
         except Exception as e:
             print(f"  Trending topics failed ({e}) — using static pool")
 
-    # 3️⃣ Static pool fallback
+    # 3️⃣ Static pool — TIER 1 (personal/body) first, TIER 2 as overflow only
     used = set()
     if used_file.exists():
         used = set(used_file.read_text(encoding="utf-8").splitlines())
 
-    available = [t for t in TOPICS if t not in used]
-    if not available:
-        used_file.write_text("", encoding="utf-8")
-        available = TOPICS
+    tier1_available = [t for t in TOPICS_TIER1 if t not in used]
+    tier2_available = [t for t in TOPICS_TIER2 if t not in used]
 
-    topic = random.choice(available)
+    if tier1_available:
+        topic = random.choice(tier1_available)
+        print(f"  [Topic] TIER-1 (personal/body) — {len(tier1_available)} remaining")
+    elif tier2_available:
+        topic = random.choice(tier2_available)
+        print(f"  [Topic] TIER-2 (systemic) — TIER-1 exhausted")
+    else:
+        # Full reset — start over with TIER 1
+        used_file.write_text("", encoding="utf-8")
+        topic = random.choice(TOPICS_TIER1)
+        print(f"  [Topic] Pool reset — restarting from TIER-1")
+
     _log_used(topic)
     return topic
 
@@ -248,10 +279,19 @@ The HOOK must STOP a scrolling viewer in their tracks. Use ONE of these proven p
      ✅ "Stop. Don't scroll. This will end your peace of mind."
 
 HOOK MUST BE:
-- ≤ 8 words (spoken in under 2 seconds — algorithm judges in first 2s)
+- ≤ 8 words TOTAL — one single sentence, no exceptions
 - Present tense, second person ("you", "your", "right now")
 - One specific number, percentage, or dollar amount
-- No filler words, no "today", no "in this video"
+- NO filler words, NO "today", NO "in this video", NO "we"
+- NEVER state the conclusion — create a question in the viewer's mind
+- NEVER use two sentences — one punch only
+
+❌ FORBIDDEN hook patterns (these kill views — zero tolerance):
+  "YOUR GUT IS ALREADY FAILING."      ← states conclusion, viewer swipes away
+  "Today we'll explore..."             ← boring opener
+  "Did you know that..."               ← overused, ignored
+  "A Walmart worker needs 3 jobs..."   ← 2 facts = confusion, not curiosity
+  "The dark truth about X"             ← vague, no specific fear
 
 ═══════════════════════════════════════════════════════════════════════
 
@@ -277,7 +317,7 @@ SCRIPT FORMAT (follow exactly):
 
 # {TOPIC TITLE} | YouTube Short Script
 **Niche:** Scary Real Statistics Visualized
-**Duration:** ~30 seconds
+**Duration:** 30–33 seconds MAXIMUM — keep every line SHORT
 **Style:** Dramatic / Conspiracy-core
 
 ---
@@ -336,8 +376,12 @@ SCRIPT FORMAT (follow exactly):
         max_tokens=2048,
         system=[{"type": "text", "text": SYSTEM_PROMPT, "cache_control": {"type": "ephemeral"}}],
         messages=[{"role": "user", "content":
-            f'Write a viral 50-second YouTube Shorts script for VoidPulse about:\n\n'
-            f'"{topic}"\n\nFollow the exact format. Make it dramatic and unsettling.'}],
+            f'Write a viral 30-second YouTube Shorts script for VoidPulse about:\n\n'
+            f'"{topic}"\n\n'
+            f'CRITICAL: The total spoken content must fit in EXACTLY 30 seconds at normal speaking pace. '
+            f'Keep each section TIGHT — HOOK 2-3 words max, BUILD 2 short sentences, '
+            f'TWIST 2 short sentences, OUTRO 1 closing line + CTA question. '
+            f'Follow the exact format. Make it dramatic and unsettling.'}],
     )
 
     script_text = response.content[0].text
@@ -496,6 +540,17 @@ def step_generate_video(script_path: Path, audio_path: Path,
 
     sections       = gv.extract_sections(script_path)
     voiceover      = AudioFileClip(str(audio_path))
+
+    # Hard cap: trim audio to 35s max so video never exceeds 35 seconds
+    MAX_DURATION = 35.0
+    if voiceover.duration > MAX_DURATION:
+        print(f"  ⚠️  Voiceover {voiceover.duration:.1f}s > {MAX_DURATION}s — trimming to {MAX_DURATION}s")
+        voiceover  = voiceover.subclipped(0, MAX_DURATION)
+        # Re-export trimmed audio so downstream steps get the right file
+        trimmed_path = audio_path.parent / (audio_path.stem + "_trimmed.mp3")
+        voiceover.write_audiofile(str(trimmed_path), fps=44100, logger=None)
+        audio_path = trimmed_path
+
     total_duration = voiceover.duration
 
     # Stat overlays — extract early so SFX ticks can sync to stat reveals
