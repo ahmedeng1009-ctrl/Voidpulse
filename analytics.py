@@ -60,15 +60,11 @@ def log_upload(video_id: str, topic: str, uploaded_at: str | None = None):
 def get_youtube_client():
     from google.auth.transport.requests import Request
     from google.oauth2.credentials import Credentials
-    from google_auth_oauthlib.flow import InstalledAppFlow
     from googleapiclient.discovery import build
 
-    SCOPES = [
-        "https://www.googleapis.com/auth/youtube.upload",
-        "https://www.googleapis.com/auth/youtube.readonly",
-    ]
-    TOKEN_FILE  = "token.json"
-    SECRET_FILE = "client_secret.json"
+    # youtube.upload is sufficient — videos().list() works with any valid OAuth token
+    SCOPES     = ["https://www.googleapis.com/auth/youtube.upload"]
+    TOKEN_FILE = "token.json"
 
     creds = None
     if Path(TOKEN_FILE).exists():
@@ -76,11 +72,12 @@ def get_youtube_client():
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
+            with open(TOKEN_FILE, "w", encoding="utf-8") as f:
+                f.write(creds.to_json())
         else:
-            flow = InstalledAppFlow.from_client_secrets_file(SECRET_FILE, SCOPES)
-            creds = flow.run_local_server(port=0)
-        with open(TOKEN_FILE, "w") as f:
-            f.write(creds.to_json())
+            raise RuntimeError(
+                "token.json is missing or invalid — run the pipeline locally once to re-authorize."
+            )
 
     return build("youtube", "v3", credentials=creds)
 
@@ -167,18 +164,113 @@ def print_report(stats: list[dict], log: list[dict]):
     print(f"\n{'═'*72}\n")
 
 
+# ── Daily refresh — used by GitHub Actions analytics workflow ─────────────────
+
+def refresh_performance() -> dict:
+    """
+    Fetch live YouTube stats for all uploaded videos, save to performance.json,
+    and invalidate the smart_topics cache so the next pipeline run re-analyses
+    with fresh data.
+    Returns a summary dict.
+    """
+    log = load_video_log()
+    if not log:
+        print("  No uploaded videos to refresh.")
+        return {}
+
+    video_ids = [e["id"] for e in log]
+    print(f"  Fetching live stats for {len(video_ids)} video(s)...")
+
+    try:
+        stats = fetch_video_stats(video_ids)
+    except Exception as e:
+        print(f"  ERROR fetching stats: {e}")
+        return {}
+
+    log_map = {e["id"]: e for e in log}
+    now     = datetime.now()
+    records = []
+
+    for s in stats:
+        entry    = log_map.get(s["id"], {})
+        topic    = entry.get("topic", s["title"])
+        days_old = 1.0
+        try:
+            uploaded_dt = datetime.fromisoformat(entry["uploaded_at"])
+            days_old    = max((now - uploaded_dt).total_seconds() / 86400, 1.0)
+        except Exception:
+            pass
+
+        views = s["views"]
+        likes = s["likes"]
+        cmts  = s["comments"]
+
+        records.append({
+            "id":             s["id"],
+            "topic":          topic,
+            "views":          views,
+            "likes":          likes,
+            "comments":       cmts,
+            "days_old":       round(days_old, 1),
+            "views_per_day":  round(views / days_old, 1),
+            "engagement_rate": round((likes + cmts) / max(views, 1) * 100, 2),
+            "url":            s["url"],
+            "uploaded_at":    entry.get("uploaded_at", ""),
+        })
+
+    # Save fresh performance snapshot
+    perf_path = Path("metadata/performance.json")
+    perf_path.parent.mkdir(parents=True, exist_ok=True)
+    perf_path.write_text(
+        json.dumps({
+            "fetched_at": now.isoformat(timespec="seconds"),
+            "videos":     records,
+        }, indent=2, ensure_ascii=False),
+        encoding="utf-8",
+    )
+    print(f"  performance.json updated — {len(records)} videos")
+
+    # Invalidate smart_topics cache so next pipeline run re-analyses with fresh data
+    smart_cache = Path("metadata/smart_topics.json")
+    if smart_cache.exists():
+        try:
+            cache = json.loads(smart_cache.read_text(encoding="utf-8"))
+            cache["cached_at"] = "2000-01-01T00:00:00"  # force expiry
+            smart_cache.write_text(json.dumps(cache, indent=2, ensure_ascii=False), encoding="utf-8")
+            print("  smart_topics cache invalidated — will regenerate on next pipeline run")
+        except Exception:
+            pass
+
+    total_views = sum(r["views"] for r in records)
+    best = max(records, key=lambda r: r["views_per_day"]) if records else {}
+    summary = {
+        "videos":      len(records),
+        "total_views": total_views,
+        "best_topic":  best.get("topic", ""),
+        "best_vpd":    best.get("views_per_day", 0),
+    }
+
+    print(f"  Total views: {total_views:,}  |  Best: {best.get('topic','')[:40]} ({best.get('views_per_day',0):.1f} v/day)")
+    return summary
+
+
 # ── Entry point ───────────────────────────────────────────────────────────────
 
 def main():
     parser = argparse.ArgumentParser(description="VoidPulse Analytics Dashboard")
-    parser.add_argument("--top",  type=int, default=None, help="Show only top N videos")
-    parser.add_argument("--add",  default=None,           help="Add video ID manually to log")
-    parser.add_argument("--topic", default="Manual add",  help="Topic for --add")
+    parser.add_argument("--top",     type=int, default=None, help="Show only top N videos")
+    parser.add_argument("--add",     default=None,           help="Add video ID manually to log")
+    parser.add_argument("--topic",   default="Manual add",   help="Topic for --add")
+    parser.add_argument("--refresh", action="store_true",    help="Refresh performance.json from YouTube API")
     args = parser.parse_args()
 
     if args.add:
         log_upload(args.add, args.topic)
         print(f"Added video {args.add} to log.")
+        return
+
+    if args.refresh:
+        refresh_performance()
         return
 
     log = load_video_log()
