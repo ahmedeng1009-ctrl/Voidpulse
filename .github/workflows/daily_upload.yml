@@ -3,8 +3,7 @@ name: VoidPulse Daily Upload
 on:
   schedule:
     # 23:00 UTC = 02:00 Iraq (UTC+3) = 18:00 US Eastern = 23:00 UK — peak Shorts audience
-    # Mon-Fri only (weekends get 30% less algorithmic reach on Shorts)
-    - cron: '0 23 * * 1,2,3,4,5'
+    - cron: '0 23 * * *'
   workflow_dispatch:
     inputs:
       topic:
