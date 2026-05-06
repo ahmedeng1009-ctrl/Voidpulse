@@ -138,6 +138,7 @@ jobs:
         run: |
           git config user.name  "VoidPulse Bot"
           git config user.email "voidpulse-bot@users.noreply.github.com"
+          git checkout -- generate_video.py
           git add metadata/
           # فقط نعمل commit لو في تغييرات فعلية
           git diff --cached --quiet || git commit -m "chore: update metadata after pipeline run [skip ci]"
