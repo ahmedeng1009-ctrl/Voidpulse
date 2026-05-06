@@ -1,4 +1,4 @@
-name: VoidPulse Daily Upload
+﻿name: VoidPulse Daily Upload
 
 on:
   schedule:
@@ -68,12 +68,13 @@ jobs:
               if not os.environ.get(key):
                   print(f"ERROR: Secret '{key}' is missing or empty!", flush=True)
                   sys.exit(1)
-          with open('.env', 'w') as f:
-              f.write(f"ANTHROPIC_API_KEY={os.environ['ANTHROPIC_API_KEY']}\n")
-              f.write(f"ELEVENLABS_API_KEY={os.environ['ELEVENLABS_API_KEY']}\n")
-              f.write(f"PEXELS_API_KEY={os.environ['PEXELS_API_KEY']}\n")
-              f.write(f"TELEGRAM_BOT_TOKEN={os.environ.get('TELEGRAM_BOT_TOKEN','')}\n")
-              f.write(f"TELEGRAM_CHAT_ID={os.environ.get('TELEGRAM_CHAT_ID','')}\n")
+          def clean(s): return s.strip().lstrip(chr(0xfeff))
+          with open('.env', 'w', encoding='utf-8') as f:
+              f.write(f"ANTHROPIC_API_KEY={clean(os.environ['ANTHROPIC_API_KEY'])}\n")
+              f.write(f"ELEVENLABS_API_KEY={clean(os.environ['ELEVENLABS_API_KEY'])}\n")
+              f.write(f"PEXELS_API_KEY={clean(os.environ['PEXELS_API_KEY'])}\n")
+              f.write(f"TELEGRAM_BOT_TOKEN={clean(os.environ.get('TELEGRAM_BOT_TOKEN',''))}\n")
+              f.write(f"TELEGRAM_CHAT_ID={clean(os.environ.get('TELEGRAM_CHAT_ID',''))}\n")
           # strip BOM if present (PowerShell on Windows adds UTF-8 BOM)
           def strip_bom(s):
               return s.lstrip('﻿')
