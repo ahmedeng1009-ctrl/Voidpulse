@@ -314,7 +314,7 @@ SCRIPT FORMAT (follow exactly):
 
 # {TOPIC TITLE} | YouTube Short Script
 **Niche:** Scary Real Statistics Visualized
-**Duration:** 30–33 seconds MAXIMUM — keep every line SHORT
+**Duration:** 18–22 seconds MAXIMUM — keep every line SHORT and punchy
 **Style:** Dramatic / Conspiracy-core
 
 ---
@@ -339,7 +339,7 @@ SCRIPT FORMAT (follow exactly):
 
 ---
 
-**[TWIST — 0:13–0:25]**
+**[TWIST — 0:10–0:18]**
 > *[Stage direction]*
 
 "Spoken line."
@@ -348,7 +348,7 @@ SCRIPT FORMAT (follow exactly):
 
 ---
 
-**[OUTRO / CTA — 0:25–0:33]**
+**[OUTRO / CTA — 0:15–0:22]**
 > *[Stage direction]*
 
 "Closing revelation line."
@@ -373,15 +373,40 @@ SCRIPT FORMAT (follow exactly):
         max_tokens=2048,
         system=[{"type": "text", "text": SYSTEM_PROMPT, "cache_control": {"type": "ephemeral"}}],
         messages=[{"role": "user", "content":
-            f'Write a viral 30-second YouTube Shorts script for VoidPulse about:\n\n'
+            f'Write a viral 20-second YouTube Shorts script for VoidPulse about:\n\n'
             f'"{topic}"\n\n'
-            f'CRITICAL: The total spoken content must fit in EXACTLY 30 seconds at normal speaking pace. '
-            f'Keep each section TIGHT — HOOK 2-3 words max, BUILD 2 short sentences, '
-            f'TWIST 2 short sentences, OUTRO 1 closing line + CTA question. '
+            f'CRITICAL: The total spoken content must fit in EXACTLY 20 seconds at normal speaking pace. '
+            f'Keep each section ULTRA TIGHT — HOOK ≤8 words (mandatory), BUILD 2 short sentences max, '
+            f'TWIST 1-2 short sentences, OUTRO 1 closing line + CTA question. '
             f'Follow the exact format. Make it dramatic and unsettling.'}],
     )
 
     script_text = response.content[0].text
+
+    # ── Hook validation — enforce ≤8 words, retry once if violated ───────────
+    hook_match = re.search(r'\[HOOK[^\]]*\][^\n]*\n(?:[^\n]*\n)*?"([^"]{5,})"', script_text)
+    if hook_match:
+        hook_line = hook_match.group(1)
+        hook_words = len(hook_line.split())
+        if hook_words > 8:
+            print(f"  ⚠️  Hook too long ({hook_words} words): \"{hook_line[:60]}\" — retrying...")
+            fix_response = client.messages.create(
+                model="claude-sonnet-4-6",
+                max_tokens=200,
+                messages=[{
+                    "role": "user",
+                    "content": (
+                        f'This hook is {hook_words} words — too long. Rewrite it as ONE sentence, '
+                        f'STRICTLY ≤8 words, present tense, personal ("you/your"), with one shocking stat or threat.\n\n'
+                        f'ORIGINAL: "{hook_line}"\n\n'
+                        f'Return ONLY the new hook sentence, no quotes, no explanation.'
+                    )
+                }],
+            )
+            new_hook = fix_response.content[0].text.strip().strip('"')
+            script_text = script_text.replace(hook_line, new_hook, 1)
+            print(f"  ✅ Hook fixed ({len(new_hook.split())} words): \"{new_hook}\"")
+
     output_dir  = Path("scripts/drafts")
     output_dir.mkdir(parents=True, exist_ok=True)
     script_path = output_dir / (slugify(topic) + ".md")
