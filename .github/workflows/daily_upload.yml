@@ -150,6 +150,7 @@ jobs:
         if: success() && env.GH_PAT != ''
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
+          GH_TOKEN: ${{ secrets.GH_PAT }}
           GH_REPO: ${{ github.repository }}
         run: |
           if [ -f token.json ]; then
