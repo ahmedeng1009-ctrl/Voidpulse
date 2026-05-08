@@ -23,7 +23,7 @@ from dotenv import load_dotenv
 
 # Always run from the project directory — critical for Task Scheduler
 os.chdir(Path(__file__).parent)
-load_dotenv()
+load_dotenv(override=True)
 
 # ── File logging (writes to logs/YYYY-MM-DD_HH-MM.log) ───────────────────────
 

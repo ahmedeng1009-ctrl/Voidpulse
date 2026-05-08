@@ -3,7 +3,7 @@
 token.json
 client_secret.json
 
-# مجلدات كبيرة
+# ملفات كبيرة — لا ترفع
 video/
 audio/
 thumbnails/
@@ -17,3 +17,8 @@ logs/
 # Temp files
 temp_audio.m4a
 *.tmp
+test_run.log
+
+# تتبع metadata (مهم للـ cloud — يمنع تكرار المواضيع والكليبات)
+!metadata/
+!metadata/**
