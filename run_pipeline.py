@@ -145,19 +145,20 @@ TOPICS_TIER1 = [
 ]
 
 TOPICS_TIER2 = [
-    # ── Systemic / societal — use as backup only ──────────────────────────────
-    "How surveillance capitalism sells your soul",
-    "How the hidden cost of your cheap Amazon purchase destroys communities",
-    "How governments use fear to control populations",
-    "How the silent epidemic of loneliness is destroying society",
-    "How the dark reality of factory farming affects everything you eat",
-    "How grocery loyalty cards sell your health data to insurance companies",
-    "How the diamond industry invented a tradition to sell you worthless rocks",
-    "How pharmaceutical companies create diseases to sell you the cure",
-    "How social credit systems are already silently operating in your country",
-    "How cosmetic companies sell you solutions to problems they manufactured",
-    "How the opioid crisis was deliberately engineered by three pharmaceutical families",
-    "How the education system was redesigned to produce workers not thinkers",
+    # ── Systemic / societal — DISABLED until 1000 subs to avoid demonetization ──
+    # Uncomment after reaching 1000 subscribers:
+    # "How surveillance capitalism sells your soul",
+    # "How the hidden cost of your cheap Amazon purchase destroys communities",
+    # "How governments use fear to control populations",
+    # "How the silent epidemic of loneliness is destroying society",
+    # "How the dark reality of factory farming affects everything you eat",
+    # "How grocery loyalty cards sell your health data to insurance companies",
+    # "How the diamond industry invented a tradition to sell you worthless rocks",
+    # "How pharmaceutical companies create diseases to sell you the cure",
+    # "How social credit systems are already silently operating in your country",
+    # "How cosmetic companies sell you solutions to problems they manufactured",
+    # "How the opioid crisis was deliberately engineered by three pharmaceutical families",
+    # "How the education system was redesigned to produce workers not thinkers",
 ]
 
 # Flat pool used by legacy code paths — TIER1 always first
@@ -228,16 +229,12 @@ def pick_topic(use_trends: bool = False, use_smart: bool = False) -> str:
         used = set(used_file.read_text(encoding="utf-8").splitlines())
 
     tier1_available = [t for t in TOPICS_TIER1 if t not in used]
-    tier2_available = [t for t in TOPICS_TIER2 if t not in used]
 
     if tier1_available:
         topic = random.choice(tier1_available)
         print(f"  [Topic] TIER-1 (personal/body) — {len(tier1_available)} remaining")
-    elif tier2_available:
-        topic = random.choice(tier2_available)
-        print(f"  [Topic] TIER-2 (systemic) — TIER-1 exhausted")
     else:
-        # Full reset — start over with TIER 1
+        # Full reset — start over with TIER 1 (TIER-2 disabled until 1000 subs)
         used_file.write_text("", encoding="utf-8")
         topic = random.choice(TOPICS_TIER1)
         print(f"  [Topic] Pool reset — restarting from TIER-1")
@@ -541,8 +538,8 @@ def step_generate_video(script_path: Path, audio_path: Path,
     sections       = gv.extract_sections(script_path)
     voiceover      = AudioFileClip(str(audio_path))
 
-    # Hard cap: trim audio to 35s max so video never exceeds 35 seconds
-    MAX_DURATION = 35.0
+    # Hard cap: trim audio to 22s max — optimal for Shorts watch-completion rate
+    MAX_DURATION = 22.0
     if voiceover.duration > MAX_DURATION:
         print(f"  ⚠️  Voiceover {voiceover.duration:.1f}s > {MAX_DURATION}s — trimming to {MAX_DURATION}s")
         voiceover  = voiceover.subclipped(0, MAX_DURATION)

@@ -99,6 +99,11 @@ def generate_seo_metadata(topic: str, hook: str = "") -> dict:
     if "#Shorts" not in desc and "#shorts" not in desc:
         metadata["description"] = desc.rstrip() + "\n#Shorts #VoidPulse #DarkFacts"
 
+    # AI disclosure — required by YouTube policy for AI-generated content
+    desc = metadata.get("description", "")
+    if "AI-generated" not in desc:
+        metadata["description"] = desc.rstrip() + "\n\n(AI-generated content)"
+
     return metadata
 
 
