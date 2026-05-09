@@ -256,13 +256,29 @@ Return ONLY valid JSON, no markdown, in this EXACT format:
 
 # ── Apply to YouTube upload ───────────────────────────────────────────────────
 
+def get_next_publish_at() -> str:
+    """
+    Returns the next 23:00 UTC as an RFC 3339 string.
+    23:00 UTC = 02:00 AM Iraq (UTC+3) — peak Shorts audience (US prime time + UK evening).
+    If it's already past 23:00 UTC today, schedules for tomorrow.
+    """
+    from datetime import datetime, timezone, timedelta
+    now = datetime.now(timezone.utc)
+    target = now.replace(hour=23, minute=0, second=0, microsecond=0)
+    if now >= target:
+        target += timedelta(days=1)
+    return target.strftime("%Y-%m-%dT%H:%M:%S.000Z")
+
+
 def build_youtube_body(topic: str, hook: str, video_id_placeholder: str = "") -> dict:
     """Return the full YouTube API request body with SEO metadata + localizations + affiliates."""
     print("  Generating SEO metadata with Claude...")
     meta = generate_seo_metadata(topic, hook)
 
-    print(f"  Title : {meta['title']}")
-    print(f"  Tags  : {len(meta['tags'])} tags")
+    publish_at = get_next_publish_at()
+    print(f"  Title      : {meta['title']}")
+    print(f"  Tags       : {len(meta['tags'])} tags")
+    print(f"  Publish at : {publish_at}  (= 02:00 AM Iraq)")
 
     # Append affiliate links to description
     try:
@@ -296,7 +312,8 @@ def build_youtube_body(topic: str, hook: str, video_id_placeholder: str = "") ->
             "defaultAudioLanguage": "en",
         },
         "status": {
-            "privacyStatus":          "public",
+            "privacyStatus":          "private",
+            "publishAt":              get_next_publish_at(),
             "selfDeclaredMadeForKids": False,
         },
     }
