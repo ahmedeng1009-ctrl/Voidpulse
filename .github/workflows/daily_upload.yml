@@ -167,7 +167,7 @@ jobs:
       # ── 9. حفظ الـ video + logs كـ artifact (احتياطي لو الرفع فشل) ──────────
       - name: Upload video + logs
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: voidpulse-run-${{ github.run_number }}
           path: |
