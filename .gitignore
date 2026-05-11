@@ -18,6 +18,12 @@ logs/
 temp_audio.m4a
 *.tmp
 test_run.log
+task_delete.txt
+task_result.txt
+task_status.txt
+
+# Generated scripts — regenerated fresh each pipeline run
+scripts/
 
 # تتبع metadata (مهم للـ cloud — يمنع تكرار المواضيع والكليبات)
 !metadata/
