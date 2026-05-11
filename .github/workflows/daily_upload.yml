@@ -149,7 +149,7 @@ jobs:
 
       # ── 8. تحديث YOUTUBE_TOKEN_JSON بالتوكن المحدث بعد الرفع ─────────────────
       - name: Refresh YOUTUBE_TOKEN_JSON secret
-        if: always() && secrets.GH_PAT != ''
+        if: always()
         continue-on-error: true
         env:
           GH_TOKEN: ${{ secrets.GH_PAT }}
