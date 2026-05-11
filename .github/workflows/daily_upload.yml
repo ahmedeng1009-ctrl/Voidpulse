@@ -26,13 +26,13 @@ jobs:
     steps:
       # ── 1. تحميل الكود ────────────────────────────────────────────────────────
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       # ── 2. Python ─────────────────────────────────────────────────────────────
       - name: Set up Python 3.11
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.11'
           cache: 'pip'
@@ -147,13 +147,16 @@ jobs:
 
       # ── 8. تحديث YOUTUBE_TOKEN_JSON بالتوكن المحدث بعد الرفع ─────────────────
       - name: Refresh YOUTUBE_TOKEN_JSON secret
-        if: always() && env.GH_PAT != ''
+        if: always() && secrets.GH_PAT != ''
         continue-on-error: true
         env:
-          GH_PAT: ${{ secrets.GH_PAT }}
           GH_TOKEN: ${{ secrets.GH_PAT }}
           GH_REPO: ${{ github.repository }}
         run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "GH_PAT secret not set — skipping token refresh (non-critical)"
+            exit 0
+          fi
           if [ -f token.json ]; then
             gh secret set YOUTUBE_TOKEN_JSON < token.json --repo "$GH_REPO"
             echo "YOUTUBE_TOKEN_JSON secret updated successfully."

@@ -40,6 +40,33 @@ PERF_SNAPSHOT    = Path("metadata/performance.json")
 CACHE_TTL_HOURS  = 24
 MIN_VIDEOS       = 4  # below this, smart topics fall back to trending
 
+# ── TIER-1 guard — reject systemic/political topics, require personal threat ──
+
+TIER2_KEYWORDS = [
+    "federal reserve", "the fed", " fed ", "billionaire", "wall street",
+    "stock market", " ipo", "congress", "senate", "pentagon", " irs",
+    "voting rights", "election", "government ", "central bank",
+    "interest rate", "corporate wage", "real estate bubble", "housing market",
+    "hedge fund", "settlement", "crypto ", "bitcoin", "coinbase", "lawsuit",
+    "tax haven", "wealth gap", "income inequality", "corporate greed",
+]
+
+TIER1_SIGNALS = [
+    "your ", "you ", "you're", "your body", "your blood", "your gut",
+    "your brain", "your skin", "your lungs", "your liver", "your phone",
+    "your food", "your water", "your air", "your home", "your bed",
+    "your sleep", "your hair", "your eyes", "your heart", "your cells",
+    "inside you", "right now",
+]
+
+
+def is_tier1_topic(topic: str) -> bool:
+    """True only if topic is personal/body-threat focused (TIER-1)."""
+    t = topic.lower()
+    if any(kw in t for kw in TIER2_KEYWORDS):
+        return False
+    return any(kw in t for kw in TIER1_SIGNALS)
+
 
 # ── Data collection ──────────────────────────────────────────────────────────
 
@@ -272,7 +299,7 @@ Return the JSON described in your system prompt."""
         print(f"  Warning: Claude returned invalid JSON — using empty result")
         return {"patterns_winning": [], "patterns_losing": [], "topics": []}
 
-    # Filter out anything already covered (case-insensitive substring check)
+    # Filter: remove used topics + enforce TIER-1 (no systemic/political)
     used_lower = {t.lower() for t in used_topics}
     fresh = []
     for t in data.get("topics", []):
@@ -280,6 +307,12 @@ Return the JSON described in your system prompt."""
         if not t_clean or len(t_clean) < 15:
             continue
         if any(u in t_clean.lower() or t_clean.lower() in u for u in used_lower):
+            continue
+        if not is_tier1_topic(t_clean):
+            print(f"  [Smart] Rejected TIER-2 topic: \"{t_clean[:60]}\"")
+            continue
+        if len(t_clean.split()) > 20:
+            print(f"  [Smart] Rejected too-long topic ({len(t_clean.split())} words): \"{t_clean[:60]}\"")
             continue
         fresh.append(t_clean)
 

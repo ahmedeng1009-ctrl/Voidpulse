@@ -90,9 +90,23 @@ def generate_seo_metadata(topic: str, hook: str = "") -> dict:
         print(f"  Warning: Claude returned invalid JSON — using fallback metadata")
         metadata = _fallback_metadata(topic)
 
-    # Enforce title length
-    if len(metadata.get("title", "")) > 90:
-        metadata["title"] = metadata["title"][:87] + "..."
+    # Enforce title length — 70 chars is the YouTube SEO optimum
+    title = metadata.get("title", "")
+    if len(title) > 70:
+        print(f"  ⚠️  Title too long ({len(title)} chars) — asking Claude to shorten...")
+        import anthropic as _anth
+        fix_resp = _anth.Anthropic().messages.create(
+            model="claude-sonnet-4-6",
+            max_tokens=100,
+            messages=[{"role": "user", "content": (
+                f"Shorten this YouTube title to STRICTLY under 70 characters. "
+                f"Keep it shocking and punchy. Return ONLY the new title, nothing else.\n\n"
+                f"ORIGINAL: {title}"
+            )}],
+        )
+        short = fix_resp.content[0].text.strip().strip('"')
+        metadata["title"] = short[:70] if len(short) > 70 else short
+        print(f"  ✅ Title fixed ({len(metadata['title'])} chars): {metadata['title']}")
 
     # Guarantee #Shorts is in the description — required for YouTube to classify as a Short
     desc = metadata.get("description", "")

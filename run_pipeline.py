@@ -699,7 +699,7 @@ def step_upload_youtube(video_path: Path, thumbnail_path: Path | None,
         print(f"  SEO optimizer failed ({e}) — using basic metadata")
         body = {
             "snippet": {
-                "title":                topic[:90],
+                "title":                topic[:70],
                 "description":          f"{topic}\n\n#VoidPulse #Dark #Facts #Shorts",
                 "tags":                 ["voidpulse", "dark facts", "scary truth", "shorts", "horror"],
                 "categoryId":           "22",

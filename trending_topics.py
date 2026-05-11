@@ -25,19 +25,19 @@ from dotenv import load_dotenv
 
 load_dotenv(Path(__file__).parent / ".env", encoding="utf-8", override=True)
 
-# ── VoidPulse topic categories (for Claude context) ───────────────────────────
+# ── VoidPulse topic categories (TIER-1 only — personal/body threat) ──────────
 
 VOIDPULSE_THEMES = [
-    "money, wealth inequality, billionaires, taxes, financial system",
-    "social media, algorithms, tech addiction, surveillance capitalism",
-    "environment, pollution, climate, plastic, ocean",
-    "food industry, processed food, addiction, health manipulation",
-    "government, power, control, fear, propaganda",
-    "housing crisis, rent, real estate, homelessness",
-    "mental health, loneliness, depression, society",
-    "fast fashion, textile waste, sweatshops",
-    "pharmaceutical industry, drug prices, healthcare",
-    "work culture, burnout, corporate exploitation",
+    "toxins and chemicals in everyday products harming your body right now",
+    "microplastics in food, water, and air entering your bloodstream",
+    "your phone, screen, or headphones damaging your brain or body silently",
+    "household items (furniture, air freshener, cookware) off-gassing poison",
+    "processed food and additives rewiring your gut and brain chemistry",
+    "personal care products (shampoo, deodorant, sunscreen) absorbing into your skin",
+    "sleep disruption from blue light, algorithms, and bedroom toxins",
+    "drinking water contaminants (chlorine, PFAS, lead) affecting your health",
+    "your office chair, posture, or desk destroying your spine and health",
+    "hidden ingredients in cosmetics and toiletries linked to hormone disruption",
 ]
 
 # ── Gemini Google Search Grounding — أحسن مصدر للمواضيع الطازجة ─────────────
@@ -277,25 +277,37 @@ def trends_to_voidpulse_topics(trends: list[str], count: int = 5) -> list[str]:
 
     raw    = response.content[0].text.strip()
     topics = [line.strip("•-– ").strip() for line in raw.splitlines() if line.strip()]
-    topics = [t for t in topics if len(t) > 15][:count]
-    return topics
+    topics = [t for t in topics if len(t) > 15]
+
+    # Enforce TIER-1: reject systemic/political topics
+    from smart_topics import is_tier1_topic
+    tier1 = []
+    for t in topics:
+        if not is_tier1_topic(t):
+            print(f"  [Trending] Rejected TIER-2: \"{t[:60]}\"")
+            continue
+        if len(t.split()) > 20:
+            print(f"  [Trending] Rejected too-long ({len(t.split())} words): \"{t[:60]}\"")
+            continue
+        tier1.append(t)
+    return tier1[:count]
 
 
 # ── Fallback: curated evergreen topics ───────────────────────────────────────
 
 EVERGREEN_TOPICS = [
-    "The dark truth about how credit card companies trap you forever",
-    "How pharmaceutical companies create diseases to sell you cures",
-    "The real reason your food is making you sick and addicted",
-    "How corporations legally steal billions through stock buybacks",
-    "The terrifying truth about what social media does to your brain",
-    "How the housing market was rigged against you from the start",
-    "The dark secret behind why you're always tired and depressed",
-    "How governments use debt to control entire populations",
-    "The shocking truth about what's in your drinking water",
-    "How corporations manipulate your emotions to make you spend more",
-    "The hidden reason why antibiotics are becoming useless",
-    "How streaming platforms are making you lonelier and poorer",
+    "How your plastic water bottle is leaching hormones into every sip you take",
+    "How your deodorant is loading your lymph nodes with aluminum right now",
+    "How your non-stick pan is releasing toxic fumes into your lungs every meal",
+    "How your mattress is off-gassing flame retardants into your body every night",
+    "How your shower water is coating your lungs with chlorine every morning",
+    "How the receipt paper in your hands absorbs directly into your bloodstream",
+    "How your toothpaste is quietly destroying your gut microbiome every day",
+    "How your morning coffee is slowly wrecking your cortisol levels forever",
+    "How your phone screen is aging your skin faster than sunlight right now",
+    "How the air inside your home is more toxic than the air outside right now",
+    "How your plastic cutting board is releasing microplastics into every meal",
+    "How your new car smell is filling your lungs with carcinogens right now",
 ]
 
 
@@ -311,11 +323,13 @@ def get_topic_for_today(region: str = "US",
     if used_file.exists():
         used = set(used_file.read_text(encoding="utf-8").splitlines())
 
+    from smart_topics import is_tier1_topic
+
     if use_trends:
         # 1️⃣ Gemini + Google Search Grounding — أحسن مصدر، يجيب حقائق اليوم
         print("  [Gemini] Searching web for today's shocking health/body facts...")
         gemini_topics = fetch_topics_with_gemini(count=8)
-        fresh = [t for t in gemini_topics if t not in used]
+        fresh = [t for t in gemini_topics if t not in used and is_tier1_topic(t)]
         if fresh:
             topic = fresh[0]
             print(f"  [Gemini] Selected: {topic}")
