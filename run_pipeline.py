@@ -115,9 +115,9 @@ TOPICS_TIER1 = [
     "How your tap water is quietly raising your cancer risk every morning",
     "How your favorite chewing gum is releasing microplastics into your bloodstream",
     # ── Your food ─────────────────────────────────────────────────────────────
-    "The dark truth about sleep deprivation",
-    "How food companies engineer addiction into every bite",
-    "How sugar companies paid scientists to blame fat for the heart disease epidemic",
+    "How your lack of sleep is accelerating cellular aging in your body right now",
+    "How every bite of processed food is rewiring your brain's hunger signals",
+    "How your daily sugar intake is quietly calcifying your arteries right now",
     "How supermarkets are scientifically designed to override your willpower",
     "How your child's school lunch was designed by junk food corporations",
     "How sports drinks are engineered to keep you dehydrated and buying more",
@@ -136,7 +136,7 @@ TOPICS_TIER1 = [
     "How your notification sounds were engineered to be impossible to ignore",
     "How every app on your phone was designed by a team of psychologists against you",
     # ── Your environment ──────────────────────────────────────────────────────
-    "How fast fashion is poisoning the planet",
+    "How your new clothes are releasing toxic dyes into your skin every time you sweat",
     "How your car's air freshener is filling your lungs with carcinogens",
     "How the receipt paper in your hands is absorbing into your bloodstream right now",
     "How your shower water is coating your lungs with chlorine every morning",

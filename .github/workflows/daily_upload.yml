@@ -57,6 +57,7 @@ jobs:
           ANTHROPIC_API_KEY:            ${{ secrets.ANTHROPIC_API_KEY }}
           ELEVENLABS_API_KEY:           ${{ secrets.ELEVENLABS_API_KEY }}
           PEXELS_API_KEY:               ${{ secrets.PEXELS_API_KEY }}
+          GEMINI_API_KEY:               ${{ secrets.GEMINI_API_KEY }}
           TELEGRAM_BOT_TOKEN:           ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID:             ${{ secrets.TELEGRAM_CHAT_ID }}
           YOUTUBE_TOKEN_JSON:           ${{ secrets.YOUTUBE_TOKEN_JSON }}
@@ -73,6 +74,7 @@ jobs:
               f.write(f"ANTHROPIC_API_KEY={clean(os.environ['ANTHROPIC_API_KEY'])}\n")
               f.write(f"ELEVENLABS_API_KEY={clean(os.environ['ELEVENLABS_API_KEY'])}\n")
               f.write(f"PEXELS_API_KEY={clean(os.environ['PEXELS_API_KEY'])}\n")
+              f.write(f"GEMINI_API_KEY={clean(os.environ.get('GEMINI_API_KEY',''))}\n")
               f.write(f"TELEGRAM_BOT_TOKEN={clean(os.environ.get('TELEGRAM_BOT_TOKEN',''))}\n")
               f.write(f"TELEGRAM_CHAT_ID={clean(os.environ.get('TELEGRAM_CHAT_ID',''))}\n")
           # strip BOM if present (PowerShell on Windows adds UTF-8 BOM)
