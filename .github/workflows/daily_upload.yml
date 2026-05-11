@@ -1,4 +1,4 @@
-﻿name: VoidPulse Daily Upload
+name: VoidPulse Daily Upload
 
 on:
   schedule:
