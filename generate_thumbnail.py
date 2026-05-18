@@ -36,38 +36,110 @@ POLLINATIONS_URL = "https://image.pollinations.ai/prompt/{prompt}?width=1280&hei
 # ── Topic → AI prompt mapping ─────────────────────────────────────────────────
 
 TOPIC_PROMPTS = [
-    (["ocean", "plastic", "sea", "water", "marine", "pollution"],
+    # ── Water / Ocean / Plastic ───────────────────────────────────────────────
+    (["ocean", "plastic", "sea", "marine", "pollution"],
      "dark ocean waves crashing at night, plastic pollution floating, eerie green bioluminescence, cinematic horror"),
 
+    (["water bottle", "tap water", "drinking water", "water"],
+     "close-up cracked glass of water with dark murky swirling chemicals, ominous red glow, macro horror cinematic"),
+
+    # ── Body / Chemicals / Toxins ─────────────────────────────────────────────
+    (["deodorant", "armpit", "lymph", "aluminum"],
+     "dark close-up human body silhouette with glowing toxic red veins, horror anatomy, cinematic"),
+
+    (["sunscreen", "skin", "bloodstream", "chemical", "lotion", "cream"],
+     "close-up human skin under dark microscope revealing glowing toxic particles, horror macro cinematic"),
+
+    (["plastic", "microplastic", "bottle", "leach"],
+     "dark scene of microscopic plastic particles floating in liquid, eerie red glow, horror macro close-up"),
+
+    (["deodorant", "shampoo", "toothpaste", "soap", "cosmetic", "product"],
+     "dark bathroom counter with glowing toxic chemical bottles, ominous red shadows, horror cinematic"),
+
+    (["gut", "microbiome", "digestive", "stomach", "intestine"],
+     "dark horror close-up of human gut anatomy with glowing red pathways, medical horror cinematic"),
+
+    (["lungs", "breathing", "inhale", "air", "chlorine", "shower"],
+     "dark silhouette of human lungs filling with red toxic smoke, horror anatomy cinematic"),
+
+    (["blood", "artery", "heart", "cardiovascular", "sugar", "oxidize"],
+     "dark close-up of blood vessels with ominous glowing red particles, horror macro medical cinematic"),
+
+    (["brain", "neuron", "cognitive", "memory", "scroll", "rewire"],
+     "dark close-up glowing human brain with red neural pathways firing in darkness, horror cinematic"),
+
+    (["eye", "vision", "blue light", "screen damage"],
+     "dark close-up human eye reflecting a cracked glowing screen, eerie horror cinematic"),
+
+    (["spine", "chair", "sitting", "posture", "compression"],
+     "dark horror X-ray of human spine with glowing red compression points, medical cinematic"),
+
+    (["cell", "aging", "dna", "telomere", "cellular"],
+     "dark microscopic view of human cells deteriorating with red glow, horror medical cinematic"),
+
+    # ── Food / Eating ─────────────────────────────────────────────────────────
+    (["food", "eat", "processed", "addictive", "snack", "cereal", "breakfast"],
+     "dark industrial food factory with ominous glowing chemicals being injected into products, cinematic horror"),
+
+    (["sugar", "sweetener", "artificial", "candy", "coca"],
+     "dark close-up of sugar crystals dissolving in dark liquid with ominous red glow, horror cinematic"),
+
+    (["cooking oil", "fry", "oxidize"],
+     "dark close-up of boiling black oil with ominous smoke and red glow, horror macro cinematic"),
+
+    (["farm", "factory farming", "animal", "meat"],
+     "dark industrial factory with ominous smoke, red foggy atmosphere, horror documentary style, cinematic"),
+
+    # ── Phone / Tech / Mind ───────────────────────────────────────────────────
+    (["phone", "screen", "scroll", "notification", "app", "algorithm", "dumb"],
+     "close-up cracked phone screen glowing in darkness, digital glitch distortion, eerie blue light, cinematic"),
+
+    (["social media", "instagram", "tiktok", "internet", "dopamine"],
+     "dark cracked phone screen with glowing social media icons leaking red light, horror cinematic"),
+
+    (["headphone", "hearing", "ear", "sound", "noise"],
+     "dark close-up human ear with glowing red soundwaves penetrating tissue, horror anatomy cinematic"),
+
+    (["streaming", "netflix", "sleep cycle", "binge"],
+     "dark bedroom with single blue TV glow illuminating a sleeping person, horror atmosphere cinematic"),
+
+    # ── Home / Environment ────────────────────────────────────────────────────
+    (["air", "indoor", "home", "dust", "toxic", "off-gas", "furniture"],
+     "dark living room with invisible toxic particles glowing red in air, horror cinematic"),
+
+    (["receipt", "paper", "bpa", "absorb"],
+     "dark close-up hands holding glowing toxic receipt paper with red chemical absorption effect"),
+
+    (["clothes", "dye", "sweat", "textile", "fashion"],
+     "dark smoky textile factory interior, dim red lights, industrial horror aesthetic, cinematic"),
+
+    (["car", "freshener", "carcinogen", "exhaust"],
+     "dark interior of a car at night with red glowing toxic particles in the air, horror cinematic"),
+
+    # ── Money / Society ───────────────────────────────────────────────────────
     (["billionaire", "money", "wealth", "rich", "tax", "bank", "finance"],
      "dark skyscraper city at night, rain, neon reflections, ominous red sky, surveillance cameras, cinematic"),
 
-    (["social media", "phone", "screen", "algorithm", "internet", "brain", "dumb"],
-     "close-up cracked phone screen glowing in darkness, digital glitch distortion, eerie blue light, cinematic"),
+    (["credit card", "debt", "spend", "overspend"],
+     "dark close-up glowing credit card with brain wires attached, horror psychology cinematic"),
 
-    (["food", "eat", "hunger", "farm", "factory", "animal", "meat"],
-     "dark industrial factory with ominous smoke, red foggy atmosphere, horror documentary style, cinematic"),
-
-    (["sleep", "insomnia", "tired", "dream"],
-     "dark bedroom with shadows creeping on walls, single lamp light, horror atmosphere, cinematic"),
-
-    (["loneliness", "alone", "isolation", "society"],
-     "empty dark rainy city street at night, single person walking, fog, dramatic moody atmosphere"),
-
-    (["fashion", "clothes", "textile", "fast fashion"],
-     "dark smoky textile factory interior, dim red lights, industrial horror aesthetic, cinematic"),
-
-    (["amazon", "cheap", "supply chain", "worker", "package"],
-     "dark warehouse with infinite shelves disappearing into darkness, single worker silhouette, dramatic"),
+    (["gym", "membership", "exercise", "fitness"],
+     "dark empty gym at night with single red emergency light, horror atmosphere cinematic"),
 
     (["government", "fear", "control", "power", "surveillance"],
      "ominous surveillance cameras on dark wet city street, red glow, authoritarian aesthetic, cinematic horror"),
 
-    (["house", "rent", "afford", "real estate"],
+    (["house", "rent", "afford", "real estate", "housing"],
      "dark abandoned city skyline at night, rain, broken windows glowing red, dystopian cinematic"),
+
+    (["loneliness", "alone", "isolation", "society"],
+     "empty dark rainy city street at night, single person walking, fog, dramatic moody atmosphere"),
+
+    (["amazon", "cheap", "supply chain", "worker", "package"],
+     "dark warehouse with infinite shelves disappearing into darkness, single worker silhouette, dramatic"),
 ]
 
-DEFAULT_PROMPT = "dark dramatic cinematic scene, ominous red atmosphere, shadows and light, horror documentary style"
+DEFAULT_PROMPT = "dark dramatic cinematic close-up scene, glowing red toxic particles in darkness, horror documentary style, ominous atmosphere"
 
 
 def get_ai_prompt(topic: str) -> str:
@@ -120,6 +192,31 @@ def extract_hook_text(script_path: Path) -> str:
         clean = re.sub(r"\*+", "", quotes[0]).strip()
         return clean
     return script_path.stem.replace("_", " ").upper()
+
+
+def generate_hook_with_claude(topic: str) -> str:
+    """Generate a punchy ≤8-word thumbnail hook via Claude when no script exists."""
+    try:
+        import anthropic
+        client = anthropic.Anthropic()
+        resp = client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=60,
+            messages=[{"role": "user", "content": (
+                f'Write ONE thumbnail hook line for a dark-facts YouTube Short about:\n"{topic}"\n\n'
+                f'Rules: ≤8 words, present tense, second person (you/your), '
+                f'one shocking fact or threat, no filler words.\n'
+                f'Return ONLY the hook — no quotes, no explanation.'
+            )}],
+        )
+        hook = resp.content[0].text.strip().strip('"').strip("'")
+        if hook and len(hook.split()) <= 10:
+            return hook
+    except Exception:
+        pass
+    # Fallback: use topic words
+    words = topic.split()
+    return " ".join(words[:6]).upper()
 
 
 def wrap_lines(text: str, font, max_width: int) -> list[str]:
@@ -182,53 +279,81 @@ def generate_thumbnail(topic: str, hook_text: str, output_path: Path,
         )
     glow_layer = glow_layer.filter(ImageFilter.GaussianBlur(40))
     img  = Image.blend(img, glow_layer, alpha=0.5)
-    draw = ImageDraw.Draw(img)
 
-    # ── Fonts ─────────────────────────────────────────────────────────────────
+    # ── Dynamic font size — fewer words = bigger text = more readable at thumb size
+    word_count = len(hook_text.split())
+    if word_count <= 3:
+        font_size = 135
+    elif word_count <= 5:
+        font_size = 115
+    elif word_count <= 7:
+        font_size = 95
+    else:
+        font_size = 78
+
     try:
-        font_main  = ImageFont.truetype(FONT_IMPACT, 110)
-        font_sub   = ImageFont.truetype(FONT_ARIAL_BD, 42)
+        font_main  = ImageFont.truetype(FONT_IMPACT, font_size)
         font_brand = ImageFont.truetype(FONT_ARIAL_BD, 36)
     except Exception:
         font_main  = ImageFont.load_default()
-        font_sub   = font_main
         font_brand = font_main
 
     # ── Main text (hook) ──────────────────────────────────────────────────────
     hook_upper = hook_text.upper()
-    max_text_w = THUMB_W - 120
+    max_text_w = THUMB_W - 100
     lines = wrap_lines(hook_upper, font_main, max_text_w)
 
-    line_h = 120
+    line_h     = int(font_size * 1.22)
     total_text_h = len(lines) * line_h
-    y_start = cy - total_text_h // 2 - 30
+    # Place text in the upper-centre zone — Shorts thumbnails get cropped on mobile
+    y_start = max(40, cy - total_text_h // 2 - 50)
 
+    # ── Semi-transparent dark boxes behind each line (readability on any bg) ──
+    img_rgba = img.convert("RGBA")
+    box_overlay = Image.new("RGBA", (THUMB_W, THUMB_H), (0, 0, 0, 0))
+    box_draw    = ImageDraw.Draw(box_overlay)
+
+    line_metrics = []
     for i, line in enumerate(lines):
-        bbox = font_main.getbbox(line)
+        bbox   = font_main.getbbox(line)
         line_w = bbox[2] - bbox[0]
+        line_h_actual = bbox[3] - bbox[1]
         x = (THUMB_W - line_w) // 2
         y = y_start + i * line_h
+        line_metrics.append((x, y, line_w, line_h_actual))
+        pad_x, pad_y = 22, 10
+        box_draw.rectangle(
+            [x - pad_x, y - pad_y,
+             x + line_w + pad_x, y + line_h_actual + pad_y],
+            fill=(0, 0, 0, 165),
+        )
 
-        # Multi-layer shadow for depth
-        for offset in range(6, 0, -1):
+    img = Image.alpha_composite(img_rgba, box_overlay).convert("RGB")
+    draw = ImageDraw.Draw(img)
+
+    # ── Draw text lines ───────────────────────────────────────────────────────
+    for i, (line, (x, y, _, _)) in enumerate(zip(lines, line_metrics)):
+        # Deep shadow
+        for offset in range(5, 0, -1):
             draw.text((x + offset, y + offset), line, font=font_main, fill=(0, 0, 0))
+        # Red stroke
+        draw.text((x + 2, y + 2), line, font=font_main, fill=(200, 0, 0))
+        # White main text — first line gets a warm-yellow tint to draw the eye
+        color = (255, 240, 80) if i == 0 and len(lines) > 1 else (255, 255, 255)
+        draw.text((x, y), line, font=font_main, fill=color)
 
-        # Red stroke version (offset by 2px)
-        draw.text((x + 2, y + 2), line, font=font_main, fill=(180, 0, 0))
-
-        # White main text
-        draw.text((x, y), line, font=font_main, fill=(255, 255, 255))
-
-    # ── Topic subtitle ────────────────────────────────────────────────────────
-    sub_text = topic.upper()
-    bbox = font_sub.getbbox(sub_text)
-    sub_w = bbox[2] - bbox[0]
-    sub_x = (THUMB_W - sub_w) // 2
-    sub_y = y_start + total_text_h + 20
-
-    if sub_y + 60 < THUMB_H - 60:
-        draw.text((sub_x + 2, sub_y + 2), sub_text, font=font_sub, fill=(0, 0, 0))
-        draw.text((sub_x, sub_y), sub_text, font=font_sub, fill=(200, 50, 50))
+    # ── Warning badge — top-left corner (pattern interrupt) ───────────────────
+    try:
+        font_badge = ImageFont.truetype(FONT_ARIAL_BD, 48)
+    except Exception:
+        font_badge = font_brand
+    badge = "⚠"
+    try:
+        bx, by = 18, 14
+        draw.text((bx + 2, by + 2), badge, font=font_badge, fill=(0, 0, 0))
+        draw.text((bx, by), badge, font=font_badge, fill=(255, 60, 0))
+    except Exception:
+        pass  # emoji may not render on all systems — non-critical
 
     # ── VoidPulse brand bar ───────────────────────────────────────────────────
     bar_h = 56

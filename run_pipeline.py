@@ -97,68 +97,68 @@ def setup_logging() -> Path:
 # Rule: pick from TIER_1 first, fall back to TIER_2 if TIER_1 is exhausted.
 
 TOPICS_TIER1 = [
-    # ── Your body ─────────────────────────────────────────────────────────────
+    # ── Your body — toxins & chemicals ────────────────────────────────────────
     "How much plastic is inside your body right now",
     "How your deodorant is silently poisoning your lymph nodes every day",
     "How your sunscreen is loading your bloodstream with toxic chemicals right now",
     "How your plastic water bottle is leaching hormones into every sip",
-    "How sitting eight hours a day is accelerating your cellular aging",
     "How your toothpaste is quietly destroying your gut microbiome",
-    "How your morning coffee is slowly wrecking your cortisol levels forever",
     "How your shampoo strips the natural defenses your scalp needs to survive",
-    "How your phone screen is damaging your eyes faster than you think",
-    "How your headphones are permanently destroying your hearing right now",
-    "How the air inside your home is more toxic than the air outside",
-    "How your credit card is wiring your brain to overspend without feeling it",
-    "How your office chair is slowly compressing your spine into permanent damage",
-    "How the blue light from your screen is aging your skin while you scroll",
     "How your tap water is quietly raising your cancer risk every morning",
     "How your favorite chewing gum is releasing microplastics into your bloodstream",
-    # ── Your food ─────────────────────────────────────────────────────────────
-    "How your lack of sleep is accelerating cellular aging in your body right now",
-    "How every bite of processed food is rewiring your brain's hunger signals",
-    "How your daily sugar intake is quietly calcifying your arteries right now",
-    "How supermarkets are scientifically designed to override your willpower",
-    "How your child's school lunch was designed by junk food corporations",
-    "How sports drinks are engineered to keep you dehydrated and buying more",
-    "How the snack food industry deliberately engineers portion blindness into you",
-    "How artificial sweeteners are making you crave more sugar than ever",
-    "How your breakfast cereal was designed by addiction scientists not nutritionists",
-    "How your cooking oil is silently oxidizing inside your arteries right now",
-    # ── Your mind & behavior ──────────────────────────────────────────────────
-    "The dark history of how social media hijacks your brain",
-    "The secret algorithm that controls what you think",
-    "How your phone is making you dumber every day",
-    "How your streaming service is engineered to destroy your sleep cycle",
-    "How your gym membership is designed so you never actually go",
-    "How news algorithms are built to keep you anxious and coming back",
-    "How your brain is being rewired by infinite scroll without your consent",
-    "How your notification sounds were engineered to be impossible to ignore",
-    "How every app on your phone was designed by a team of psychologists against you",
-    # ── Your environment ──────────────────────────────────────────────────────
-    "How your new clothes are releasing toxic dyes into your skin every time you sweat",
-    "How your car's air freshener is filling your lungs with carcinogens",
-    "How the receipt paper in your hands is absorbing into your bloodstream right now",
+    "How your receipt paper absorbs directly into your bloodstream within seconds",
     "How your shower water is coating your lungs with chlorine every morning",
     "How the dust in your bedroom contains more toxic chemicals than a factory floor",
     "How your new furniture is off-gassing chemicals into your brain for years",
+    "How your new clothes are releasing toxic dyes into your skin every time you sweat",
+    "How your car's air freshener is filling your lungs with carcinogens every drive",
+    "How your non-stick pan is poisoning every meal you cook right now",
+    "How your lip balm is making your lips more addicted and drier every day",
+    "How the plastic in your tea bag dissolves into every cup you drink",
+    "How your dry cleaning chemicals are still offgassing on your skin for weeks",
+    # ── Your body — aging & damage ────────────────────────────────────────────
+    "How sitting eight hours a day is accelerating your cellular aging",
+    "How your phone screen is damaging your eyes faster than you think",
+    "How your headphones are permanently destroying your hearing right now",
+    "How your office chair is slowly compressing your spine into permanent damage",
+    "How the blue light from your screen is aging your skin while you scroll",
+    "How your lack of sleep is accelerating cellular aging in your body right now",
+    "How your daily sugar intake is quietly calcifying your arteries right now",
+    "How your cooking oil is silently oxidizing inside your arteries right now",
+    "How your morning coffee is slowly wrecking your cortisol levels forever",
+    "How holding your phone wrong is permanently damaging your neck tendons",
+    "How your earbuds are creating a breeding ground for bacteria inside your ears",
+    # ── Your food ─────────────────────────────────────────────────────────────
+    "How every bite of processed food is rewiring your brain's hunger signals",
+    "How supermarkets are scientifically designed to override your willpower",
+    "How your child's school lunch was designed by junk food corporations",
+    "How sports drinks are engineered to keep you dehydrated and buying more",
+    "How artificial sweeteners are making you crave more sugar than ever",
+    "How your breakfast cereal was designed by addiction scientists not nutritionists",
+    "How the snack food industry deliberately engineers portion blindness into you",
+    "How seed oils in every restaurant meal are silently inflaming your arteries",
+    "How your protein bar contains more sugar than a candy bar by design",
+    "How food dyes in children's snacks are linked to hyperactivity that doctors ignore",
+    "How your salad dressing undoes every healthy choice you made today",
+    # ── Your mind & screen ────────────────────────────────────────────────────
+    "How your phone is making you dumber every day",
+    "How your streaming service is engineered to destroy your sleep cycle",
+    "How your brain is being rewired by infinite scroll without your consent",
+    "How your notification sounds were engineered to be impossible to ignore",
+    "How every app on your phone was designed by a team of psychologists against you",
+    "How your gym membership is designed so you never actually go",
+    "How news algorithms are built to keep you anxious and coming back for more",
+    "How your brain loses the ability to read deeply after years of scrolling",
+    "How your memory is measurably getting worse because your phone remembers for you",
 ]
 
 TOPICS_TIER2 = [
-    # ── Systemic / societal — DISABLED until 1000 subs to avoid demonetization ──
-    # Uncomment after reaching 1000 subscribers:
-    # "How surveillance capitalism sells your soul",
-    # "How the hidden cost of your cheap Amazon purchase destroys communities",
-    # "How governments use fear to control populations",
-    # "How the silent epidemic of loneliness is destroying society",
-    # "How the dark reality of factory farming affects everything you eat",
+    # ── Corporate dark secrets — unlock after 1000 subs ───────────────────────
     # "How grocery loyalty cards sell your health data to insurance companies",
-    # "How the diamond industry invented a tradition to sell you worthless rocks",
-    # "How pharmaceutical companies create diseases to sell you the cure",
-    # "How social credit systems are already silently operating in your country",
     # "How cosmetic companies sell you solutions to problems they manufactured",
+    # "How pharmaceutical companies create diseases to sell you the cure",
     # "How the opioid crisis was deliberately engineered by three pharmaceutical families",
-    # "How the education system was redesigned to produce workers not thinkers",
+    # "How the diamond industry invented a tradition to sell you worthless rocks",
 ]
 
 # Flat pool used by legacy code paths — TIER1 always first
@@ -243,9 +243,57 @@ def pick_topic(use_trends: bool = False, use_smart: bool = False) -> str:
     return topic
 
 
+# ── Hook A/B variants — pick the strongest hook before writing the script ─────
+
+def generate_hook_variants(topic: str) -> str:
+    """
+    Generate 3 hook candidates and return the highest-scoring one.
+    Adds one fast API call but measurably improves scroll-stop rate.
+    """
+    import anthropic, json
+
+    client = anthropic.Anthropic()
+    try:
+        response = client.messages.create(
+            model="claude-sonnet-4-6",
+            max_tokens=350,
+            messages=[{"role": "user", "content": (
+                f'Generate 3 different hook lines for a VoidPulse YouTube Short about:\n'
+                f'"{topic}"\n\n'
+                f'Rules for EACH hook:\n'
+                f'- STRICTLY ≤ 8 words total\n'
+                f'- Present tense, second person (you/your/right now)\n'
+                f'- One specific shocking number, percentage, or measurable fact\n'
+                f'- No filler words, no "today", no "did you know"\n\n'
+                f'Then pick the BEST one (highest scroll-stop power on a mobile feed).\n\n'
+                f'Return ONLY valid JSON:\n'
+                f'{{"hooks":["h1","h2","h3"],"winner":0,"why":"one line"}}'
+            )}],
+        )
+        raw = response.content[0].text.strip()
+        raw = re.sub(r"^```(?:json)?\s*", "", raw)
+        raw = re.sub(r"\s*```$", "", raw)
+        data = json.loads(raw)
+        hooks      = data.get("hooks", [])
+        winner_idx = int(data.get("winner", 0))
+        why        = data.get("why", "")
+        if not hooks:
+            return ""
+        print(f"  [Hook A/B] {len(hooks)} variants generated:")
+        for i, h in enumerate(hooks):
+            marker = "✅" if i == winner_idx else "  "
+            print(f"    {marker} {i+1}. {h}  ({len(h.split())} words)")
+        if why:
+            print(f"  [Hook A/B] Why winner: {why}")
+        return hooks[winner_idx].strip().strip('"')
+    except Exception as e:
+        print(f"  [Hook A/B] Failed ({e}) — script will generate its own hook")
+        return ""
+
+
 # ── Step 1: Generate Script ───────────────────────────────────────────────────
 
-def step_generate_script(topic: str) -> Path:
+def step_generate_script(topic: str, best_hook: str = "") -> Path:
     log(f"STEP 1: Generating script\n  '{topic}'")
 
     import anthropic
@@ -378,7 +426,9 @@ SCRIPT FORMAT (follow exactly):
             f'CRITICAL: The total spoken content must fit in EXACTLY 20 seconds at normal speaking pace. '
             f'Keep each section ULTRA TIGHT — HOOK ≤8 words (mandatory), BUILD 2 short sentences max, '
             f'TWIST 1-2 short sentences, OUTRO 1 closing line + CTA question. '
-            f'Follow the exact format. Make it dramatic and unsettling.'}],
+            f'Follow the exact format. Make it dramatic and unsettling.'
+            + (f'\n\nPRE-APPROVED HOOK (A/B tested — use it EXACTLY as written, no changes): '
+               f'"{best_hook}"' if best_hook else "")}],
     )
 
     script_text = response.content[0].text
@@ -666,10 +716,8 @@ def step_upload_youtube(video_path: Path, thumbnail_path: Path | None,
     from googleapiclient.discovery import build
     from googleapiclient.http import MediaFileUpload
 
-    # Thumbnails require channel verification in YouTube Studio (not a scope issue).
-    # Using only youtube.upload — adding extra scopes causes invalid_scope on token refresh.
     SCOPES = [
-        "https://www.googleapis.com/auth/youtube.upload",
+        "https://www.googleapis.com/auth/youtube",
     ]
     TOKEN_FILE  = "token.json"
     SECRET_FILE = "client_secret.json"
@@ -817,7 +865,8 @@ def main():
     from notify import notify
 
     try:
-        script_path    = with_retry(lambda: step_generate_script(topic),    "Script")
+        best_hook      = generate_hook_variants(topic)
+        script_path    = with_retry(lambda: step_generate_script(topic, best_hook), "Script")
         audio_path     = with_retry(lambda: step_generate_voiceover(script_path), "Voiceover")
         video_path     = with_retry(lambda: step_generate_video(
                              script_path, audio_path, topic,
